@@ -24,7 +24,7 @@ public class Chess : GameObj
 
         gameObject.name = $"Chess ({x}-{y})";
 
-        var color = Side ? Color.white : Color.black;
+        var color = Side ? Color.black : Color.white;
         m_Chess.color = color;
 
         m_Button.onClick.AddListener(OnSelect);

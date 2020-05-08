@@ -35,7 +35,7 @@ public class GameManager : MonoBehaviour
     Notify m_Notify;
 
     [SerializeField]
-    int m_BoardSize = 6;    // 須為偶數
+    int m_BoardSize = 8;    // 須為偶數
 
     float mBoardWidth = 900;
 
@@ -50,9 +50,9 @@ public class GameManager : MonoBehaviour
     event Action<int> OnChessSelect;
 
     int mRound = 0;
-    bool mCurrentSide = true;
-    string mCurrentSideName => (mCurrentSide) ? "White" : "Black";
-    string mLastSideName => (!mCurrentSide) ? "White" : "Black";
+    bool mCurrentSide = false;
+    string mCurrentSideName => (mCurrentSide) ? "Black" : "White";
+    string mLastSideName => (!mCurrentSide) ? "Black" : "White";
 
     Checker mCurSelectFrom;
     int mCurMaxMove;
@@ -141,41 +141,41 @@ public class GameManager : MonoBehaviour
     #region Round
     void StartRound()
     {
-        WhiteFirstRound();
-    }
-
-    void WhiteFirstRound()
-    {
-        mRound = 1;
-        mCurrentSide = true;
-        Debug.Log($"------- {mCurrentSideName} Round {mRound} -------");
-        var x = 0;
-        var y = 0;
-        // Highlight Cross, Select A Chess To Remove
-        for (; x < m_BoardSize; x++, y++)
-        {
-            //Debug.Log($"Highlight {x}, {y}");
-            var checker = mCheckerArray[x, y];
-            SetCheckerCanMoveFrom(checker, FirstRoundChessSelect);
-        }
-
-        OnNextRound = BlackFirstRound;
+        BlackFirstRound();
     }
 
     void BlackFirstRound()
     {
         mRound = 1;
+        mCurrentSide = true;
+        Debug.Log($"------- {mCurrentSideName} Round {mRound} -------");
+
+        var firstPos = m_BoardSize - 1;
+        var secondPos = m_BoardSize / 2;
+        var thirdPos = secondPos - 1;
+        SetFirstRoundMovableChess(firstPos, firstPos);
+        SetFirstRoundMovableChess(secondPos, secondPos);
+        SetFirstRoundMovableChess(thirdPos, thirdPos);
+        SetFirstRoundMovableChess(0, 0);
+
+        OnNextRound = WhiteFirstRound;
+    }
+
+    void WhiteFirstRound()
+    {
+        mRound = 1;
         mCurrentSide = false;
         Debug.Log($"------- {mCurrentSideName} Round {mRound} -------");
-        var x = 0;
-        var y = m_BoardSize - 1;
-        // Highlight Cross, Select A Chess To Remove
-        for (; x < m_BoardSize; x++, y--)
-        {
-            //Debug.Log($"Highlight {x}, {y}");
-            var checker = mCheckerArray[x, y];
-            SetCheckerCanMoveFrom(checker, FirstRoundChessSelect);
-        }
+
+        var emptyPos = mEmptyChecker[0].Pos;
+        var upPos = emptyPos + Vector2Int.up;
+        var downPos = emptyPos + Vector2Int.down;
+        var leftPos = emptyPos + Vector2Int.left;
+        var rightPos = emptyPos + Vector2Int.right;
+        SetFirstRoundMovableChess(upPos);
+        SetFirstRoundMovableChess(downPos);
+        SetFirstRoundMovableChess(leftPos);
+        SetFirstRoundMovableChess(rightPos);
 
         OnNextRound = NextRound;
     }
@@ -369,6 +369,20 @@ public class GameManager : MonoBehaviour
     #endregion Path Check
 
     #region Select Event
+    void SetFirstRoundMovableChess(Vector2Int pos)
+    {
+        SetFirstRoundMovableChess(pos.x, pos.y);
+    }
+
+    void SetFirstRoundMovableChess(int x, int y)
+    {
+        if (!IsPosValid(x, y))
+            return;
+
+        var checker = mCheckerArray[x, y];
+        SetCheckerCanMoveFrom(checker, FirstRoundChessSelect);
+    }
+
     void SetCheckerCanMoveFrom(Checker checker, Action<Chess> selectEvent)
     {
         if (checker.CanMoveFrom)
@@ -400,7 +414,7 @@ public class GameManager : MonoBehaviour
     void FirstRoundChessSelect(Chess chess)
     {
         // Remove first chess
-        RemoveChess(chess);
+        RemoveChess(chess.Pos);
         OnChessSelect?.Invoke(chess.Index);
 
         RoundEnd();
@@ -411,7 +425,7 @@ public class GameManager : MonoBehaviour
     {
         OnChessSelect?.Invoke(chess.Index);
 
-        var checker = mCheckerArray[chess.YPos, chess.XPos];
+        var checker = mCheckerArray[chess.XPos, chess.YPos];
         mCurSelectFrom = checker;
     }
 
@@ -536,10 +550,7 @@ public class GameManager : MonoBehaviour
         {
             // Remove Cross Chess
             var crossPos = fromChecker.Pos + normalizedDir * (distance - 1);
-            var crossChecker = mCheckerArray[crossPos.x, crossPos.y];
-            var crossChess = crossChecker.RemoveChess();
-            mChessPool.Recycle(crossChess);
-            mEmptyChecker.Add(crossChecker);
+            RemoveChess(crossPos);
             distance -= 2;
         }
 
@@ -550,16 +561,16 @@ public class GameManager : MonoBehaviour
         mEmptyChecker.Add(fromChecker);
     }
 
-    void RemoveChess(Chess chess)
+    void RemoveChess(Vector2Int pos)
     {
-        if (chess.YPos < 0 || chess.XPos < 0)
+        if (pos.x < 0 || pos.y < 0)
             return;
 
-        var checker = mCheckerArray[chess.YPos, chess.XPos];
-        checker.RemoveChess();
+        var checker = mCheckerArray[pos.x, pos.y];
+        var chess = checker.RemoveChess();
         mEmptyChecker.Add(checker);
         mChessPool.Recycle(chess);
-        Debug.Log($"Empty {checker.YPos}, {checker.XPos}");
+        Debug.Log($"Empty {checker.XPos}, {checker.YPos}");
     }
     #endregion Select Event
 

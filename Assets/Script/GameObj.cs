@@ -6,7 +6,7 @@ public class GameObj : MonoBehaviour
 
     public int XPos { get; private set; }
     public int YPos { get; private set; }
-    public bool Side { get; private set; }
+    public bool Side { get; private set; }  // true = (xy相加)偶數格, false = (xy相加)奇數格
 
     Vector2Int mPos;
     public Vector2Int Pos => mPos;

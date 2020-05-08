@@ -91,7 +91,7 @@ public class Checker : GameObj
     {
         chess.transform.parent = transform;
         chess.ResetPos();
-        chess.SetPos(YPos, XPos);
+        chess.SetPos(XPos, YPos);
         CurrentChess = chess;
     }
 
