@@ -7,9 +7,7 @@ public class Checker : GameObj
     [SerializeField]
     Image m_CheckerBG;
     [SerializeField]
-    Image m_Highlight_MoveFrom;
-    [SerializeField]
-    Image m_Highlight_MoveTo;
+    Image m_Highlight;  // Can Move To
     [SerializeField]
     Button m_Button;
 
@@ -17,13 +15,10 @@ public class Checker : GameObj
     Action<Checker> OnMoveToEvent;
 
     public Chess CurrentChess { get; private set; }
-    public bool CanMoveFrom { get; private set; }
+    public bool CanMoveFrom => (CurrentChess == null) ? false : CurrentChess.Selectable;
     public bool CanMoveTo { get; private set; }
     public bool XChecked { get; private set; }
     public bool YChecked { get; private set; }
-
-    const string kWhiteTeamColor = "#A6C076";
-    const string kBlackTeamColor = "#879571";
 
     public override void Init(int x, int y)
     {
@@ -31,9 +26,7 @@ public class Checker : GameObj
 
         gameObject.name = $"Checker ({x}-{y})";
 
-        var hexCode = Side ? kWhiteTeamColor : kBlackTeamColor;
-        ColorUtility.TryParseHtmlString(hexCode, out var color);
-        m_CheckerBG.color = color;
+        InitCheckImage();
 
         m_Button.onClick.AddListener(OnSelect);
 
@@ -42,6 +35,12 @@ public class Checker : GameObj
 
         ClearState();
         RemoveChess();
+    }
+
+    void InitCheckImage()
+    {
+        var image = ImageManager.Instance.GetCheckImageBySide(Side);
+        m_CheckerBG.sprite = image;
     }
 
     public void RegisterMoveFromEvent(Action<Chess> callback)
@@ -64,17 +63,16 @@ public class Checker : GameObj
 
     public void SetCanMoveFrom(bool active)
     {
-        CanMoveFrom = active;
-        m_Highlight_MoveFrom.enabled = CanMoveFrom;
+        if (CurrentChess == null)
+            return;
 
-        if (CurrentChess != null)
-            CurrentChess.SetSelectable(active);
+        CurrentChess.SetSelectable(active);
     }
 
     public void SetCanMoveTo(bool active)
     {
         CanMoveTo = active;
-        m_Highlight_MoveTo.enabled = CanMoveTo;
+        m_Highlight.enabled = CanMoveTo;
     }
 
     public void ClearState()

@@ -7,6 +7,8 @@ public class Chess : GameObj
     [SerializeField]
     Image m_Chess;
     [SerializeField]
+    Image m_Highlight;  // Can Move From
+    [SerializeField]
     Image m_Selecting;
     [SerializeField]
     Button m_Button;
@@ -24,8 +26,7 @@ public class Chess : GameObj
 
         gameObject.name = $"Chess ({x}-{y})";
 
-        var color = Side ? Color.black : Color.white;
-        m_Chess.color = color;
+        InitChessImage();
 
         m_Button.onClick.AddListener(OnSelect);
 
@@ -35,6 +36,14 @@ public class Chess : GameObj
         UpdateHintVisible();
 
         ResetPos();
+    }
+
+    void InitChessImage()
+    {
+        var images = ImageManager.Instance.GetChessImageBySide(Side);
+        m_Chess.sprite = images.normal;
+        m_Highlight.sprite = images.highlight;
+        m_Selecting.sprite = images.selecting;
     }
 
     public void UpdateHintVisible()
@@ -91,6 +100,7 @@ public class Chess : GameObj
     public void SetSelectable(bool active)
     {
         Selectable = active;
+        m_Highlight.enabled = active;
     }
 
     public void Selecting(bool active)
