@@ -404,7 +404,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Index: 0
-  m_CheckerBG: {fileID: 246116147}
+  m_CheckBG: {fileID: 0}
   m_Highlight: {fileID: 0}
   m_Button: {fileID: 0}
 --- !u!114 &246116147
@@ -457,7 +457,7 @@ GameObject:
   - component: {fileID: 268974966}
   - component: {fileID: 268974969}
   m_Layer: 5
-  m_Name: CheckerSample
+  m_Name: CheckSample
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -496,7 +496,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Index: 0
-  m_CheckerBG: {fileID: 268974967}
+  m_CheckBG: {fileID: 268974967}
   m_Highlight: {fileID: 719315974}
   m_Button: {fileID: 268974969}
 --- !u!114 &268974967
@@ -1003,7 +1003,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Index: 0
-  m_CheckerBG: {fileID: 719315974}
+  m_CheckBG: {fileID: 0}
   m_Highlight: {fileID: 0}
   m_Button: {fileID: 0}
 --- !u!114 &719315974
@@ -1019,7 +1019,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.4705882, g: 0.5868689, b: 1, a: 0.39215687}
+  m_Color: {r: 0.4705882, g: 1, b: 0.5866386, a: 0.39215687}
   m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1206,8 +1206,8 @@ MonoBehaviour:
   m_MenuPanel: {fileID: 224494966}
   m_StartButton: {fileID: 227787712}
   m_GamePanel: {fileID: 553160351}
-  m_CheckerSample: {fileID: 268974966}
-  m_CheckerPool: {fileID: 2084192135}
+  m_CheckSample: {fileID: 268974966}
+  m_CheckPool: {fileID: 2084192135}
   m_ChessSample: {fileID: 516333564}
   m_ChessPool: {fileID: 1447512418}
   m_BoardRoot: {fileID: 853283663}
@@ -2028,7 +2028,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Index: 0
-  m_CheckerBG: {fileID: 1334708200}
+  m_CheckBG: {fileID: 0}
   m_Highlight: {fileID: 0}
   m_Button: {fileID: 0}
 --- !u!114 &1334708200
@@ -2533,7 +2533,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2084192135}
   m_Layer: 5
-  m_Name: CheckerPool
+  m_Name: CheckPool
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -2,17 +2,17 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class Checker : GameObj
+public class Check : GameObj
 {
     [SerializeField]
-    Image m_CheckerBG;
+    Image m_CheckBG;
     [SerializeField]
     Image m_Highlight;  // Can Move To
     [SerializeField]
     Button m_Button;
 
     RectTransform mRectTrans;
-    Action<Checker> OnMoveToEvent;
+    Action<Check> OnMoveToEvent;
 
     public Chess CurrentChess { get; private set; }
     public bool CanMoveFrom => (CurrentChess == null) ? false : CurrentChess.Selectable;
@@ -24,7 +24,7 @@ public class Checker : GameObj
     {
         base.Init(x, y);
 
-        gameObject.name = $"Checker ({x}-{y})";
+        gameObject.name = $"Check ({x}-{y})";
 
         InitCheckImage();
 
@@ -40,7 +40,7 @@ public class Checker : GameObj
     void InitCheckImage()
     {
         var image = ImageManager.Instance.GetCheckImageBySide(Side);
-        m_CheckerBG.sprite = image;
+        m_CheckBG.sprite = image;
     }
 
     public void RegisterMoveFromEvent(Action<Chess> callback)
@@ -48,7 +48,7 @@ public class Checker : GameObj
         CurrentChess.RegisterSelectEvent(callback);
     }
 
-    public void RegisterMoveToEvent(Action<Checker> callback)
+    public void RegisterMoveToEvent(Action<Check> callback)
     {
         OnMoveToEvent += callback;
     }

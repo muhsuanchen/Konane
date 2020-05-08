@@ -15,9 +15,9 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     GameObject m_GamePanel;
     [SerializeField]
-    Checker m_CheckerSample;
+    Check m_CheckSample;
     [SerializeField]
-    Transform m_CheckerPool;
+    Transform m_CheckPool;
     [SerializeField]
     Chess m_ChessSample;
     [SerializeField]
@@ -39,11 +39,11 @@ public class GameManager : MonoBehaviour
 
     float mBoardWidth = 900;
 
-    PoolBase<Checker> mCheckerPool;
+    PoolBase<Check> mCheckPool;
     PoolBase<Chess> mChessPool;
 
-    Checker[,] mCheckerArray;
-    List<Checker> mEmptyChecker;
+    Check[,] mCheckArray;
+    List<Check> mEmptyCheck;
 
     event Action OnNextRound;
     event Action OnRoundEnd;
@@ -54,20 +54,20 @@ public class GameManager : MonoBehaviour
     string mCurrentSideName => (mCurrentSide) ? "Black" : "White";
     string mLastSideName => (!mCurrentSide) ? "Black" : "White";
 
-    Checker mCurSelectFrom;
+    Check mCurSelectFrom;
     int mCurMaxMove;
 
     private void Awake()
     {
         ShowHint = false;
 
-        mCheckerPool = new PoolBase<Checker>(m_CheckerSample, m_CheckerPool);
+        mCheckPool = new PoolBase<Check>(m_CheckSample, m_CheckPool);
         mChessPool = new PoolBase<Chess>(m_ChessSample, m_ChessPool);
-        mEmptyChecker = new List<Checker>();
+        mEmptyCheck = new List<Check>();
 
-        var checkerWidth = mBoardWidth / m_BoardSize;
-        Debug.Log($"Board Width {mBoardWidth}, {checkerWidth}");
-        m_BoardLayout.cellSize = new Vector2(checkerWidth, checkerWidth);
+        var checkWidth = mBoardWidth / m_BoardSize;
+        Debug.Log($"Board Width {mBoardWidth}, {checkWidth}");
+        m_BoardLayout.cellSize = new Vector2(checkWidth, checkWidth);
 
         m_StartButton.onClick.AddListener(OnStartGame);
         m_BackToMenuButton.onClick.AddListener(OnBackToMenu);
@@ -106,11 +106,11 @@ public class GameManager : MonoBehaviour
 
     void InitGame()
     {
-        mEmptyChecker.Clear();
-        mCheckerPool.RecycleAll();
+        mEmptyCheck.Clear();
+        mCheckPool.RecycleAll();
         mChessPool.RecycleAll();
 
-        mCheckerArray = new Checker[m_BoardSize, m_BoardSize];
+        mCheckArray = new Check[m_BoardSize, m_BoardSize];
 
         InitBoard();
 
@@ -123,17 +123,17 @@ public class GameManager : MonoBehaviour
         {
             for (var x = 0; x < m_BoardSize; x++)
             {
-                var checkerObj = mCheckerPool.GetObj();
-                var checker = checkerObj.GetComponent<Checker>();
-                checker.transform.parent = m_BoardRoot;
-                checker.Init(x, y);
-                mCheckerArray[x, y] = checker;
+                var checkObj = mCheckPool.GetObj();
+                var check = checkObj.GetComponent<Check>();
+                check.transform.parent = m_BoardRoot;
+                check.Init(x, y);
+                mCheckArray[x, y] = check;
 
                 var chessObj = mChessPool.GetObj();
                 var chess = chessObj.GetComponent<Chess>();
-                chess.transform.parent = checker.transform;
+                chess.transform.parent = check.transform;
                 chess.Init(x, y);
-                checker.SetChess(chess);
+                check.SetChess(chess);
             }
         }
     }
@@ -167,7 +167,7 @@ public class GameManager : MonoBehaviour
         mCurrentSide = false;
         Debug.Log($"------- {mCurrentSideName} Round {mRound} -------");
 
-        var emptyPos = mEmptyChecker[0].Pos;
+        var emptyPos = mEmptyCheck[0].Pos;
         var upPos = emptyPos + Vector2Int.up;
         var downPos = emptyPos + Vector2Int.down;
         var leftPos = emptyPos + Vector2Int.left;
@@ -223,51 +223,51 @@ public class GameManager : MonoBehaviour
     #region Path Check
     bool CheckMovablePath(bool side)
     {
-        foreach (var emptyChecker in mEmptyChecker)
+        foreach (var emptyCheck in mEmptyCheck)
         {
-            emptyChecker.ClearState();
+            emptyCheck.ClearState();
         }
 
         IsMoveValidCheckTime = 0;
         bool haveValidPath = false;
-        foreach (var emptyChecker in mEmptyChecker)
+        foreach (var emptyCheck in mEmptyCheck)
         {
-            //Debug.Log($"Check emptyChecker {emptyChecker.Pos}");
-            haveValidPath |= TraceAllDirection(side, emptyChecker);
+            //Debug.Log($"Check emptyCheck {emptyCheck.Pos}");
+            haveValidPath |= TraceAllDirection(side, emptyCheck);
         }
 
         Debug.Log($"CurMaxMove {mCurMaxMove}, IsMoveValidCheckTime {IsMoveValidCheckTime}");
         return haveValidPath;
     }
 
-    bool TraceAllDirection(bool side, Checker checker)
+    bool TraceAllDirection(bool side, Check check)
     {
-        //Debug.Log($"Check Same Side? {checker.Side == side}");
+        //Debug.Log($"Check Same Side? {Check.Side == side}");
         // 只能採在同隊的格子上
-        if (checker.Side != side)
+        if (check.Side != side)
             return false;
 
         var canMoveTo = false;
 
         // 對面沒有棋，繼續追
-        if (!checker.XChecked)
+        if (!check.XChecked)
         {
             var leftDepth = 0;
             var rightDepth = 0;
-            canMoveTo |= TraceMovablePath(side, checker, Vector2Int.left, ref leftDepth, out var moveFromLeft);
-            canMoveTo |= TraceMovablePath(side, checker, Vector2Int.right, ref rightDepth, out var moveFromRight);
+            canMoveTo |= TraceMovablePath(side, check, Vector2Int.left, ref leftDepth, out var moveFromLeft);
+            canMoveTo |= TraceMovablePath(side, check, Vector2Int.right, ref rightDepth, out var moveFromRight);
 
             var xDepth = leftDepth + rightDepth + 1;
             SetMaxMove(moveFromLeft, xDepth);
             SetMaxMove(moveFromRight, xDepth);
         }
 
-        if (!checker.YChecked)
+        if (!check.YChecked)
         {
             var upDepth = 0;
             var downDepth = 0;
-            canMoveTo |= TraceMovablePath(side, checker, Vector2Int.up, ref upDepth, out var moveFromUp);
-            canMoveTo |= TraceMovablePath(side, checker, Vector2Int.down, ref downDepth, out var moveFromDown);
+            canMoveTo |= TraceMovablePath(side, check, Vector2Int.up, ref upDepth, out var moveFromUp);
+            canMoveTo |= TraceMovablePath(side, check, Vector2Int.down, ref downDepth, out var moveFromDown);
 
             var yDepth = upDepth + downDepth + 1;
             SetMaxMove(moveFromUp, yDepth);
@@ -276,47 +276,47 @@ public class GameManager : MonoBehaviour
 
         if (canMoveTo)
         {
-            //Debug.Log($"Highlight To {checker.YPos}, {checker.XPos}");
-            SetCheckerCanMoveTo(checker, CheckerSelect);
+            //Debug.Log($"Highlight To {Check.YPos}, {Check.XPos}");
+            SetCheckCanMoveTo(check, CheckSelect);
         }
 
-        checker.SetAllChecked(true);
+        check.SetAllChecked(true);
 
         return canMoveTo;
     }
 
     int IsMoveValidCheckTime = 0;
 
-    bool TraceMovablePath(bool side, Checker checker, Vector2Int direction, ref int depth, out Checker moveFrom)
+    bool TraceMovablePath(bool side, Check check, Vector2Int direction, ref int depth, out Check moveFrom)
     {
         IsMoveValidCheckTime++;
-        //Debug.Log($"Check {checker.Pos}, {direction}");
+        //Debug.Log($"Check {Check.Pos}, {direction}");
         moveFrom = null;
 
-        var isMoveDirectionValid = IsMoveDirectionValid(checker.Pos, direction, out var nextChecker);
+        var isMoveDirectionValid = IsMoveDirectionValid(check.Pos, direction, out var nextCheck);
         //Debug.Log($"Check IsMoveValid? {isMoveDirectionValid}");
         if (!isMoveDirectionValid)
             return false;
 
-        var nextCheckerHaveChess = nextChecker.CurrentChess != null;
-        //Debug.Log($"Check nextCheckerHaveChess {nextCheckerHaveChess}");
-        if (nextCheckerHaveChess)
+        var nextCheckHaveChess = nextCheck.CurrentChess != null;
+        //Debug.Log($"Check nextCheckHaveChess {nextCheckHaveChess}");
+        if (nextCheckHaveChess)
         {
             // 對面有棋了，此條路線成立
-            //Debug.Log($"Highlight From {nextChecker.Pos}");
-            SetCheckerCanMoveFrom(nextChecker, ChessSelect);
-            moveFrom = nextChecker;
+            //Debug.Log($"Highlight From {nextCheck.Pos}");
+            SetCheckCanMoveFrom(nextCheck, ChessSelect);
+            moveFrom = nextCheck;
             return true;
         }
         else
         {
             depth++;
             // 對面沒有棋，繼續追
-            if (TraceMovablePath(side, nextChecker, direction, ref depth, out moveFrom))
+            if (TraceMovablePath(side, nextCheck, direction, ref depth, out moveFrom))
             {
-                //Debug.Log($"Highlight To {checker.YPos}, {checker.XPos}");
-                SetCheckerCanMoveTo(checker, CheckerSelect);
-                checker.SetDirChecked(direction);
+                //Debug.Log($"Highlight To {Check.YPos}, {Check.XPos}");
+                SetCheckCanMoveTo(check, CheckSelect);
+                check.SetDirChecked(direction);
                 return true;
             }
         }
@@ -327,20 +327,20 @@ public class GameManager : MonoBehaviour
     /// <summary>
     /// 前方有棋子可以跳，且目標格子在棋盤範圍內
     /// </summary>
-    bool IsMoveDirectionValid(Vector2Int pos, Vector2Int direction, out Checker nextChecker)
+    bool IsMoveDirectionValid(Vector2Int pos, Vector2Int direction, out Check nextCheck)
     {
-        nextChecker = null;
+        nextCheck = null;
         var nextPos = pos + direction * 2;
         var isNextPosValid = IsPosValid(nextPos.x, nextPos.y);
         if (!isNextPosValid)
             return false;
 
         //Debug.Log($"IsMoveValid crossPos {crossPos}, nextPos {nextPos}");
-        nextChecker = mCheckerArray[nextPos.x, nextPos.y];
+        nextCheck = mCheckArray[nextPos.x, nextPos.y];
 
         // 是否有可以跨過去的棋
         var crossPos = pos + direction;
-        return mCheckerArray[crossPos.x, crossPos.y].CurrentChess != null;
+        return mCheckArray[crossPos.x, crossPos.y].CurrentChess != null;
     }
 
     /// <summary>
@@ -352,12 +352,12 @@ public class GameManager : MonoBehaviour
             && y >= 0 && y < m_BoardSize;
     }
 
-    void SetMaxMove(Checker checker, int depth)
+    void SetMaxMove(Check check, int depth)
     {
-        if (checker == null)
+        if (check == null)
             return;
 
-        checker.SetChessMaxMove(depth);
+        check.SetChessMaxMove(depth);
         UpdateMaxMove(depth);
     }
 
@@ -379,32 +379,32 @@ public class GameManager : MonoBehaviour
         if (!IsPosValid(x, y))
             return;
 
-        var checker = mCheckerArray[x, y];
-        SetCheckerCanMoveFrom(checker, FirstRoundChessSelect);
+        var check = mCheckArray[x, y];
+        SetCheckCanMoveFrom(check, FirstRoundChessSelect);
     }
 
-    void SetCheckerCanMoveFrom(Checker checker, Action<Chess> selectEvent)
+    void SetCheckCanMoveFrom(Check check, Action<Chess> selectEvent)
     {
-        if (checker.CanMoveFrom)
+        if (check.CanMoveFrom)
             return;
 
-        var chess = checker.CurrentChess;
-        checker.SetCanMoveFrom(true);
-        checker.RegisterMoveFromEvent(selectEvent);
+        var chess = check.CurrentChess;
+        check.SetCanMoveFrom(true);
+        check.RegisterMoveFromEvent(selectEvent);
         OnChessSelect += chess.OnSomeoneSelected;
-        OnRoundEnd += checker.ClearState;
+        OnRoundEnd += check.ClearState;
         OnRoundEnd += chess.ClearState;
     }
 
-    void SetCheckerCanMoveTo(Checker checker, Action<Checker> selectEvent)
+    void SetCheckCanMoveTo(Check check, Action<Check> selectEvent)
     {
-        if (checker.CanMoveTo)
+        if (check.CanMoveTo)
             return;
 
-        var chess = checker.CurrentChess;
-        checker.SetCanMoveTo(true);
-        checker.RegisterMoveToEvent(selectEvent);
-        OnRoundEnd += checker.ClearState;
+        var chess = check.CurrentChess;
+        check.SetCanMoveTo(true);
+        check.RegisterMoveToEvent(selectEvent);
+        OnRoundEnd += check.ClearState;
         if (chess != null)
         {
             OnRoundEnd += chess.ClearState;
@@ -425,38 +425,38 @@ public class GameManager : MonoBehaviour
     {
         OnChessSelect?.Invoke(chess.Index);
 
-        var checker = mCheckerArray[chess.XPos, chess.YPos];
-        mCurSelectFrom = checker;
+        var check = mCheckArray[chess.XPos, chess.YPos];
+        mCurSelectFrom = check;
     }
 
-    void CheckerSelect(Checker checker)
+    void CheckSelect(Check check)
     {
-        TryMoveChess(mCurSelectFrom, checker);
+        TryMoveChess(mCurSelectFrom, check);
     }
 
-    void TryMoveChess(Checker fromChecker, Checker toChecker)
+    void TryMoveChess(Check fromCheck, Check toCheck)
     {
-        //Debug.Log($"TryMoveChess {fromChecker.Pos}, {toChecker.Pos}");
-        if (fromChecker == null || toChecker == null)
+        //Debug.Log($"TryMoveChess {fromCheck.Pos}, {toCheck.Pos}");
+        if (fromCheck == null || toCheck == null)
             return;
 
         // 沒有可以移動的棋，或者對面有棋導致無法移動過去
-        if (fromChecker.CurrentChess == null || toChecker.CurrentChess != null)
+        if (fromCheck.CurrentChess == null || toCheck.CurrentChess != null)
             return;
 
-        if (!IsMoveValid(fromChecker, toChecker, out var moveTimes))
+        if (!IsMoveValid(fromCheck, toCheck, out var moveTimes))
             return;
 
         void MoveAndEndRound()
         {
             //Debug.Log($"IsMoveValid MoveAndEndRound!");
-            MoveChess(fromChecker, toChecker);
+            MoveChess(fromCheck, toCheck);
             RoundEnd();
             OnNextRound?.Invoke();
         }
 
-        //Debug.Log($"IsMoveValid Can Jump Next? pos {toChecker.Pos}, dir {dir}");
-        //             IsMoveDirectionValid(toChecker.Pos, dir, out var nextChecker) && nextChecker.CurrentChess == null)
+        //Debug.Log($"IsMoveValid Can Jump Next? pos {toCheck.Pos}, dir {dir}");
+        //             IsMoveDirectionValid(toCheck.Pos, dir, out var nextCheck) && nextCheck.CurrentChess == null)
         // 可以連跳
         if (mCurMaxMove > moveTimes)
         {
@@ -477,18 +477,18 @@ public class GameManager : MonoBehaviour
         return;
     }
 
-    bool IsMoveValid(Checker fromChecker, Checker toChecker, out int moveTimes)
+    bool IsMoveValid(Check fromCheck, Check toCheck, out int moveTimes)
     {
         moveTimes = 0;
 
-        //Debug.Log($"IsMoveValid CanMoveFrom {fromChecker.CanMoveFrom}, CanMoveTo {toChecker.CanMoveTo}");
-        if (!fromChecker.CanMoveFrom)
+        //Debug.Log($"IsMoveValid CanMoveFrom {fromCheck.CanMoveFrom}, CanMoveTo {toCheck.CanMoveTo}");
+        if (!fromCheck.CanMoveFrom)
             return false;
 
-        if (!toChecker.CanMoveTo)
+        if (!toCheck.CanMoveTo)
             return false;
 
-        var direction = toChecker.Pos - fromChecker.Pos;
+        var direction = toCheck.Pos - fromCheck.Pos;
         var distance = (int)direction.magnitude;
         var normalizedDir = direction / distance;
         //Debug.Log($"IsMoveValid IsMoveDirectionValid? dir {normalizedDir}, distance {distance}");
@@ -499,7 +499,7 @@ public class GameManager : MonoBehaviour
             return false;
 
         //Debug.Log($"IsMoveValid IsPathValid? dir {normalizedDir}, distance {distance}");
-        if (!IsPathValid(fromChecker.Pos, normalizedDir, distance))
+        if (!IsPathValid(fromCheck.Pos, normalizedDir, distance))
             return false;
 
         moveTimes = distance / 2;
@@ -518,14 +518,14 @@ public class GameManager : MonoBehaviour
         var nextPos = from + direction * 2;
         //Debug.Log($"IsPathValid crossPos {crossPos}, nextPos {nextPos}");
 
-        var crossChecker = mCheckerArray[crossPos.x, crossPos.y];
+        var crossCheck = mCheckArray[crossPos.x, crossPos.y];
         // 沒有棋可以吃
-        if (crossChecker.CurrentChess == null)
+        if (crossCheck.CurrentChess == null)
             return false;
 
-        var nextChecker = mCheckerArray[nextPos.x, nextPos.y];
+        var nextCheck = mCheckArray[nextPos.x, nextPos.y];
         // 沒有空位可以跳
-        if (nextChecker.CurrentChess != null)
+        if (nextCheck.CurrentChess != null)
             return false;
 
         distance -= 2;
@@ -540,25 +540,25 @@ public class GameManager : MonoBehaviour
             || direction == Vector2Int.right;
     }
 
-    void MoveChess(Checker fromChecker, Checker toChecker)
+    void MoveChess(Check fromCheck, Check toCheck)
     {
-        var direction = toChecker.Pos - fromChecker.Pos;
+        var direction = toCheck.Pos - fromCheck.Pos;
         var distance = (int)direction.magnitude;
         var normalizedDir = direction / distance;
 
         while (distance > 0)
         {
             // Remove Cross Chess
-            var crossPos = fromChecker.Pos + normalizedDir * (distance - 1);
+            var crossPos = fromCheck.Pos + normalizedDir * (distance - 1);
             RemoveChess(crossPos);
             distance -= 2;
         }
 
         // Move My Chess
-        var moveChess = fromChecker.RemoveChess();
-        toChecker.SetChess(moveChess);
-        mEmptyChecker.Remove(toChecker);
-        mEmptyChecker.Add(fromChecker);
+        var moveChess = fromCheck.RemoveChess();
+        toCheck.SetChess(moveChess);
+        mEmptyCheck.Remove(toCheck);
+        mEmptyCheck.Add(fromCheck);
     }
 
     void RemoveChess(Vector2Int pos)
@@ -566,11 +566,11 @@ public class GameManager : MonoBehaviour
         if (pos.x < 0 || pos.y < 0)
             return;
 
-        var checker = mCheckerArray[pos.x, pos.y];
-        var chess = checker.RemoveChess();
-        mEmptyChecker.Add(checker);
+        var check = mCheckArray[pos.x, pos.y];
+        var chess = check.RemoveChess();
+        mEmptyCheck.Add(check);
         mChessPool.Recycle(chess);
-        Debug.Log($"Empty {checker.XPos}, {checker.YPos}");
+        Debug.Log($"Empty {check.XPos}, {check.YPos}");
     }
     #endregion Select Event
 
