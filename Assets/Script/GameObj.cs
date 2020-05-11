@@ -2,8 +2,6 @@
 
 public class GameObj : MonoBehaviour
 {
-    public int Index = 0;
-
     public int XPos { get; private set; }
     public int YPos { get; private set; }
     public bool Side { get; private set; }  // true = (xy相加)偶數格, false = (xy相加)奇數格
@@ -14,7 +12,6 @@ public class GameObj : MonoBehaviour
     public virtual void Init(int x, int y)
     {
         SetPos(x, y);
-        Index = XPos * 10 + YPos;
         Side = (XPos + YPos) % 2 == 0;
 
         gameObject.SetActive(true);

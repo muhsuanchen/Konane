@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoSingleton<GameManager>
 {
     public static bool ShowHint = false;
 
@@ -47,17 +47,20 @@ public class GameManager : MonoBehaviour
 
     event Action OnNextRound;
     event Action OnRoundEnd;
-    event Action<int> OnChessSelect;
+    event Action<Vector2Int> OnChessSelect;
 
-    int mRound = 0;
-    bool mCurrentSide = false;
-    string mCurrentSideName => (mCurrentSide) ? "Black" : "White";
-    string mLastSideName => (!mCurrentSide) ? "Black" : "White";
+    public int Round { get; private set; } = 0;
+
+    public bool CurrentSide { get; private set; } = false;
+    string mCurrentSideName => (CurrentSide) ? "Black" : "White";
+    string mLastSideName => (!CurrentSide) ? "Black" : "White";
+
+    List<Check> mAllMovableCheck = new List<Check>();
 
     Check mCurSelectFrom;
     int mCurMaxMove;
 
-    private void Awake()
+    protected override void Awake()
     {
         ShowHint = false;
 
@@ -119,6 +122,9 @@ public class GameManager : MonoBehaviour
 
     void InitBoard()
     {
+        OnRoundEnd = null;
+        OnChessSelect = null;
+
         for (var y = 0; y < m_BoardSize; y++)
         {
             for (var x = 0; x < m_BoardSize; x++)
@@ -133,7 +139,13 @@ public class GameManager : MonoBehaviour
                 var chess = chessObj.GetComponent<Chess>();
                 chess.transform.parent = check.transform;
                 chess.Init(x, y);
+
                 check.SetChess(chess);
+                check.RegisterRemoveEvent(ChessRemove);
+                check.RegisterSelectEvent(ChessSelect);
+
+                OnChessSelect += check.OnSomeChessSelected;
+                OnRoundEnd += check.ClearState;
             }
         }
     }
@@ -146,9 +158,9 @@ public class GameManager : MonoBehaviour
 
     void BlackFirstRound()
     {
-        mRound = 1;
-        mCurrentSide = true;
-        Debug.Log($"------- {mCurrentSideName} Round {mRound} -------");
+        Round = 1;
+        CurrentSide = true;
+        Debug.Log($"------- {mCurrentSideName} Round {Round} -------");
 
         var firstPos = m_BoardSize - 1;
         var secondPos = m_BoardSize / 2;
@@ -163,9 +175,9 @@ public class GameManager : MonoBehaviour
 
     void WhiteFirstRound()
     {
-        mRound = 1;
-        mCurrentSide = false;
-        Debug.Log($"------- {mCurrentSideName} Round {mRound} -------");
+        Round = 1;
+        CurrentSide = false;
+        Debug.Log($"------- {mCurrentSideName} Round {Round} -------");
 
         var emptyPos = mEmptyCheck[0].Pos;
         var upPos = emptyPos + Vector2Int.up;
@@ -182,12 +194,12 @@ public class GameManager : MonoBehaviour
 
     void NextRound()
     {
-        mCurrentSide = !mCurrentSide;
-        mRound += (mCurrentSide) ? 1 : 0;
-        Debug.Log($"------- {mCurrentSideName} Round {mRound} -------");
+        CurrentSide = !CurrentSide;
+        Round += (CurrentSide) ? 1 : 0;
+        Debug.Log($"------- {mCurrentSideName} Round {Round} -------");
 
         mCurMaxMove = 0;
-        if (!CheckMovablePath(mCurrentSide))
+        if (!CheckMovablePath(CurrentSide))
         {
             GameEnd();
             return;
@@ -199,7 +211,6 @@ public class GameManager : MonoBehaviour
     void RoundEnd()
     {
         OnRoundEnd?.Invoke();
-        OnRoundEnd = null;
         mCurSelectFrom = null;
     }
 
@@ -254,24 +265,34 @@ public class GameManager : MonoBehaviour
         {
             var leftDepth = 0;
             var rightDepth = 0;
-            canMoveTo |= TraceMovablePath(side, check, Vector2Int.left, ref leftDepth, out var moveFromLeft);
-            canMoveTo |= TraceMovablePath(side, check, Vector2Int.right, ref rightDepth, out var moveFromRight);
+            var leftMovePath = new LinkedList<Check>();
+            var rightMovePath = new LinkedList<Check>();
+            canMoveTo |= TraceMovablePath(side, check, Vector2Int.left, ref leftDepth, ref leftMovePath, out var moveFromLeft);
+            canMoveTo |= TraceMovablePath(side, check, Vector2Int.right, ref rightDepth, ref rightMovePath, out var moveFromRight);
+
+            leftMovePath.AddFirst(check);
+            rightMovePath.AddFirst(check);
 
             var xDepth = leftDepth + rightDepth + 1;
-            SetMaxMove(moveFromLeft, xDepth);
-            SetMaxMove(moveFromRight, xDepth);
+            SetMovePathInfo(moveFromLeft, Vector2Int.left, rightMovePath, xDepth);  // 補上對面方向的 path
+            SetMovePathInfo(moveFromRight, Vector2Int.right, leftMovePath, xDepth); // 補上對面方向的 path
         }
 
         if (!check.YChecked)
         {
             var upDepth = 0;
             var downDepth = 0;
-            canMoveTo |= TraceMovablePath(side, check, Vector2Int.up, ref upDepth, out var moveFromUp);
-            canMoveTo |= TraceMovablePath(side, check, Vector2Int.down, ref downDepth, out var moveFromDown);
+            var upMovePath = new LinkedList<Check>();
+            var downMovePath = new LinkedList<Check>();
+            canMoveTo |= TraceMovablePath(side, check, Vector2Int.up, ref upDepth, ref upMovePath, out var moveFromUp);
+            canMoveTo |= TraceMovablePath(side, check, Vector2Int.down, ref downDepth, ref downMovePath, out var moveFromDown);
+
+            upMovePath.AddFirst(check);
+            downMovePath.AddFirst(check);
 
             var yDepth = upDepth + downDepth + 1;
-            SetMaxMove(moveFromUp, yDepth);
-            SetMaxMove(moveFromDown, yDepth);
+            SetMovePathInfo(moveFromUp, Vector2Int.up, downMovePath, yDepth);       // 補上對面方向的 path
+            SetMovePathInfo(moveFromDown, Vector2Int.down, upMovePath, yDepth);     // 補上對面方向的 path
         }
 
         if (canMoveTo)
@@ -287,7 +308,7 @@ public class GameManager : MonoBehaviour
 
     int IsMoveValidCheckTime = 0;
 
-    bool TraceMovablePath(bool side, Check check, Vector2Int direction, ref int depth, out Check moveFrom)
+    bool TraceMovablePath(bool side, Check check, Vector2Int direction, ref int depth, ref LinkedList<Check> movePath, out Check moveFrom)
     {
         IsMoveValidCheckTime++;
         //Debug.Log($"Check {Check.Pos}, {direction}");
@@ -304,7 +325,7 @@ public class GameManager : MonoBehaviour
         {
             // 對面有棋了，此條路線成立
             //Debug.Log($"Highlight From {nextCheck.Pos}");
-            SetCheckCanMoveFrom(nextCheck, ChessSelect);
+            SetCheckCanMoveFrom(nextCheck);
             moveFrom = nextCheck;
             return true;
         }
@@ -312,12 +333,20 @@ public class GameManager : MonoBehaviour
         {
             depth++;
             // 對面沒有棋，繼續追
-            if (TraceMovablePath(side, nextCheck, direction, ref depth, out moveFrom))
+            if (TraceMovablePath(side, nextCheck, direction, ref depth, ref movePath, out moveFrom))
             {
+                movePath.AddFirst(check);    // 統計可移動的空格，方便之後 Apply 給可移動的旗子 □ → □ → □ → ●
+                if (moveFrom != null)
+                    moveFrom.SetDirPath(direction, check);
+
                 //Debug.Log($"Highlight To {Check.YPos}, {Check.XPos}");
                 SetCheckCanMoveTo(check, CheckSelect);
                 check.SetDirChecked(direction);
                 return true;
+            }
+            else
+            {
+                movePath.AddFirst(check);    // 統計可移動的空格，方便之後 Apply 給可移動的旗子 □ → □ → □ → ●
             }
         }
 
@@ -352,13 +381,17 @@ public class GameManager : MonoBehaviour
             && y >= 0 && y < m_BoardSize;
     }
 
-    void SetMaxMove(Check check, int depth)
+    void SetMovePathInfo(Check check, Vector2Int direction, LinkedList<Check> movePath, int depth)
     {
         if (check == null)
             return;
 
         check.SetChessMaxMove(depth);
+        check.SetDirPath(direction, movePath);
         UpdateMaxMove(depth);
+
+        if (!mAllMovableCheck.Contains(check))
+            mAllMovableCheck.Add(check);
     }
 
     void UpdateMaxMove(int newDepth)
@@ -380,20 +413,23 @@ public class GameManager : MonoBehaviour
             return;
 
         var check = mCheckArray[x, y];
-        SetCheckCanMoveFrom(check, FirstRoundChessSelect);
+        SetCheckCanRemove(check);
     }
 
-    void SetCheckCanMoveFrom(Check check, Action<Chess> selectEvent)
+    void SetCheckCanRemove(Check check)
+    {
+        if (check.CanRemove)
+            return;
+
+        check.SetCanRemove(true);
+    }
+
+    void SetCheckCanMoveFrom(Check check)
     {
         if (check.CanMoveFrom)
             return;
 
-        var chess = check.CurrentChess;
         check.SetCanMoveFrom(true);
-        check.RegisterMoveFromEvent(selectEvent);
-        OnChessSelect += chess.OnSomeoneSelected;
-        OnRoundEnd += check.ClearState;
-        OnRoundEnd += chess.ClearState;
     }
 
     void SetCheckCanMoveTo(Check check, Action<Check> selectEvent)
@@ -405,17 +441,23 @@ public class GameManager : MonoBehaviour
         check.SetCanMoveTo(true);
         check.RegisterMoveToEvent(selectEvent);
         OnRoundEnd += check.ClearState;
-        if (chess != null)
-        {
-            OnRoundEnd += chess.ClearState;
-        }
     }
 
-    void FirstRoundChessSelect(Chess chess)
+    void ChessRemove(Chess chess)
     {
+        Debug.Log($"ChessRemove {chess.Pos}");
+        OnChessSelect?.Invoke(chess.Pos);
+
+        if (mCurSelectFrom == null
+            || mCurSelectFrom.Pos != chess.Pos)
+        {
+            var check = mCheckArray[chess.XPos, chess.YPos];
+            mCurSelectFrom = check;
+            return;
+        }
+
         // Remove first chess
         RemoveChess(chess.Pos);
-        OnChessSelect?.Invoke(chess.Index);
 
         RoundEnd();
         OnNextRound?.Invoke();
@@ -423,7 +465,7 @@ public class GameManager : MonoBehaviour
 
     void ChessSelect(Chess chess)
     {
-        OnChessSelect?.Invoke(chess.Index);
+        OnChessSelect?.Invoke(chess.Pos);
 
         var check = mCheckArray[chess.XPos, chess.YPos];
         mCurSelectFrom = check;

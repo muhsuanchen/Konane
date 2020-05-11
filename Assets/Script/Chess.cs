@@ -7,17 +7,22 @@ public class Chess : GameObj
     [SerializeField]
     Image m_Chess;
     [SerializeField]
-    Image m_Highlight;  // Can Move From
+    Image m_Highlight;  // Can Move
     [SerializeField]
     Image m_Selecting;
+    [SerializeField]
+    Image m_Remove;
     [SerializeField]
     Button m_Button;
     [SerializeField]
     Text m_MaxMoveText;
 
     RectTransform mRectTrans;
-    Action<Chess> OnSelectEvent;
+    Action SelectHintEvent;
+    Action<Chess> OnSelectEvent;    
+    Action<Chess> OnRemoveEvent;
     public bool Selectable { get; private set; }
+    public bool Removable { get; private set; }
     int mCurMaxMove = 0;
 
     public override void Init(int x, int y)
@@ -29,7 +34,7 @@ public class Chess : GameObj
         InitChessImage();
 
         m_Button.onClick.AddListener(OnSelect);
-
+        Debug.Log($"Chess Init {x}, {y}");
         mRectTrans = gameObject.GetComponent<RectTransform>();
         mRectTrans.localScale = Vector3.one;
 
@@ -44,6 +49,7 @@ public class Chess : GameObj
         m_Chess.sprite = images.normal;
         m_Highlight.sprite = images.highlight;
         m_Selecting.sprite = images.selecting;
+        m_Remove.sprite = images.remove;
     }
 
     public void UpdateHintVisible()
@@ -57,35 +63,14 @@ public class Chess : GameObj
         mRectTrans.offsetMax = new Vector2(-2, -2); // new Vector2(-right, -top);    
     }
 
-    private void OnSelect()
-    {
-        if (!Selectable)
-            return;
-
-        Selecting(true);
-        OnSelectEvent?.Invoke(this);
-    }
-
-    public void RegisterSelectEvent(Action<Chess> callback)
-    {
-        OnSelectEvent += callback;
-    }
-
-    public void OnSomeoneSelected(int index)
-    {
-        if (index == Index)
-            return;
-
-        Selecting(false);
-    }
-
     public override void Recycle()
     {
-        m_Button.onClick.RemoveAllListeners();
         ClearState();
-
         SetPos(-1, -1);
-        Index = -1;
+
+        OnSelectEvent = null;
+        OnRemoveEvent = null;
+        m_Button.onClick.RemoveAllListeners();
 
         base.Recycle();
     }
@@ -94,7 +79,52 @@ public class Chess : GameObj
     {
         ClearMaxMove();
         Selecting(false);
-        OnSelectEvent = null;
+    }
+
+    #region Event
+    public void RegisterSelectHintEvent(Action callback)
+    {
+        SelectHintEvent += callback;
+    }
+
+    public void UnregisterSelectHintEvent(Action callback)
+    {
+        SelectHintEvent -= callback;
+    }
+
+    public void RegisterSelectEvent(Action<Chess> callback)
+    {
+        OnSelectEvent += callback;
+    }
+
+    public void RegisterRemoveEvent(Action<Chess> callback)
+    {
+        OnRemoveEvent += callback;
+    }
+
+    private void OnSelect()
+    {
+        //if (!Selectable)
+        //    return;
+
+        if (GameManager.Instance.CurrentSide != Side)
+            return;
+
+        Debug.Log($"OnSelect {Pos} **********");
+        Selecting(true);
+    }
+
+    public void OnOtherChessSelected()
+    {
+        Selecting(false);
+    }
+    #endregion
+
+    #region State
+    public void SetRemovable(bool active)
+    {
+        Removable = active;
+        m_Highlight.enabled = active;
     }
 
     public void SetSelectable(bool active)
@@ -105,15 +135,26 @@ public class Chess : GameObj
 
     public void Selecting(bool active)
     {
-        m_Selecting.enabled = active;
+        if (GameManager.Instance.Round == 1)
+        {
+            Debug.Log($"Selecting {Pos} = {active} && {Removable}");
+            var remove = Removable && active;
+            m_Remove.enabled = remove;
+            if (remove) OnRemoveEvent?.Invoke(this);
+        }
+        else
+        {
+            m_Selecting.enabled = active;
+            if (active)
+            {
+                OnSelectEvent?.Invoke(this);
+                SelectHintEvent?.Invoke();
+            }
+        }
     }
+    #endregion
 
-    public void ClearMaxMove()
-    {
-        mCurMaxMove = 0;
-        UpdateMaxMoveText();
-    }
-
+    #region Path
     public bool SetMaxMove(int maxMove)
     {
         if (maxMove <= mCurMaxMove)
@@ -131,4 +172,11 @@ public class Chess : GameObj
         else
             m_MaxMoveText.text = $"{mCurMaxMove}";
     }
+
+    public void ClearMaxMove()
+    {
+        mCurMaxMove = 0;
+        UpdateMaxMoveText();
+    }
+    #endregion
 }
