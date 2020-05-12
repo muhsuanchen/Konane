@@ -31,8 +31,6 @@ public class Check : GameObj
 
         gameObject.name = $"Check ({x}-{y})";
 
-        InitCheckImage();
-
         m_Button.onClick.AddListener(OnSelect);
 
         mRectTrans = gameObject.GetComponent<RectTransform>();
@@ -40,12 +38,6 @@ public class Check : GameObj
 
         ClearState();
         RemoveChess();
-    }
-
-    void InitCheckImage()
-    {
-        var image = ImageManager.Instance.GetCheckImageBySide(Side);
-        m_CheckBG.sprite = image;
     }
 
     public override void Recycle()
@@ -61,8 +53,6 @@ public class Check : GameObj
 
     public void ClearState()
     {
-        SetCanRemove(false);
-        SetCanMoveFrom(false);
         SetCanMoveTo(false);
         SetAllChecked(false);
         SetHighlight(false);
@@ -100,7 +90,6 @@ public class Check : GameObj
 
     void ShowChessPathHint()
     {
-        Debug.Log($"OnChessSelect {Pos}, {CanMoveFrom}");
         if (!CanMoveFrom)
             return;
 
@@ -115,7 +104,6 @@ public class Check : GameObj
         if (CurrentChess == null)
             return;
 
-        Debug.Log($"OnSomeChessSelected {Pos} == {selectPos}");
         CurrentChess.OnOtherChessSelected();
         SetPathHighlight(false);
     }
@@ -124,7 +112,7 @@ public class Check : GameObj
     #region State
     void SetPathHighlight(bool highlight)
     {
-        Debug.Log($"Path {Pos} X {mCurMaxXPath.Count}, Y {mCurMaxYPath.Count}");
+        //Debug.Log($"Path {Pos} X {mCurMaxXPath.Count}, Y {mCurMaxYPath.Count}");
         foreach (var check in mCurMaxXPath)
         {
             check.SetHighlight(highlight);

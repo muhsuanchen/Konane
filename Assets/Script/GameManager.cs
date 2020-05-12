@@ -1,46 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
-public class GameManager : MonoSingleton<GameManager>
+public enum GameSide
 {
-    public static bool ShowHint = false;
+    Black = 1,  // true
+    White = 0,  // false
+}
 
-    [SerializeField]
-    GameObject m_MenuPanel;
-    [SerializeField]
-    Button m_StartButton;
-
-    [SerializeField]
-    GameObject m_GamePanel;
-    [SerializeField]
-    Check m_CheckSample;
-    [SerializeField]
-    Transform m_CheckPool;
-    [SerializeField]
-    Chess m_ChessSample;
-    [SerializeField]
-    Transform m_ChessPool;
-    [SerializeField]
-    Transform m_BoardRoot;
-    [SerializeField]
-    GridLayoutGroup m_BoardLayout;
-    [SerializeField]
-    Button m_ShowHintButton;
-    [SerializeField]
-    Button m_BackToMenuButton;
-
+public partial class GameManager : MonoSingleton<GameManager>
+{
     [SerializeField]
     Notify m_Notify;
-
-    [SerializeField]
-    int m_BoardSize = 8;    // 須為偶數
-
-    float mBoardWidth = 900;
-
-    PoolBase<Check> mCheckPool;
-    PoolBase<Chess> mChessPool;
 
     Check[,] mCheckArray;
     List<Check> mEmptyCheck;
@@ -52,67 +23,79 @@ public class GameManager : MonoSingleton<GameManager>
     public int Round { get; private set; } = 0;
 
     public bool CurrentSide { get; private set; } = false;
-    string mCurrentSideName => (CurrentSide) ? "Black" : "White";
-    string mLastSideName => (!CurrentSide) ? "Black" : "White";
+    string mCurrentSideName => (CurrentSide) ? GameSide.Black.ToString() : GameSide.White.ToString();
+    string mLastSideName => (!CurrentSide) ? GameSide.Black.ToString() : GameSide.White.ToString();
 
     List<Check> mAllMovableCheck = new List<Check>();
 
     Check mCurSelectFrom;
-    int mCurMaxMove;
+    int mCurMaxMove = 0;
+    bool mIsGameEnd = false;
 
     protected override void Awake()
     {
         ShowHint = false;
-
-        mCheckPool = new PoolBase<Check>(m_CheckSample, m_CheckPool);
-        mChessPool = new PoolBase<Chess>(m_ChessSample, m_ChessPool);
         mEmptyCheck = new List<Check>();
 
-        var checkWidth = mBoardWidth / m_BoardSize;
-        Debug.Log($"Board Width {mBoardWidth}, {checkWidth}");
-        m_BoardLayout.cellSize = new Vector2(checkWidth, checkWidth);
-
-        m_StartButton.onClick.AddListener(OnStartGame);
-        m_BackToMenuButton.onClick.AddListener(OnBackToMenu);
-        m_ShowHintButton.onClick.AddListener(OnShowHint);
+        InitPool();
+        InitMenu();
+        InitGame();
     }
 
     void Start()
     {
-        m_MenuPanel.SetActive(true);
-        m_GamePanel.SetActive(false);
+        ShowMenu();
+        HideGame();
         m_Notify.Hide();
-    }
-
-    void OnShowHint()
-    {
-        ShowHint = !ShowHint;
-        var allUsing = mChessPool.GetAllUsing();
-        foreach (var chess in allUsing)
-        {
-            chess.UpdateHintVisible();
-        }
     }
 
     void OnBackToMenu()
     {
-        m_MenuPanel.SetActive(true);
-        m_GamePanel.SetActive(false);
+        if (mIsGameEnd)
+        {
+            m_Notify.InitNotify(new NotifyData
+            {
+                Content = "Sure to back to menu?",
+                ConfirmText = "Yah!",
+                ConfirmEvent = LeaveGame,
+                CancelText = "Nah, wait...",
+                CancelEvent = null,
+            });
+        }
+        else
+        {
+            m_Notify.InitNotify(new NotifyData
+            {
+                Content = "Sure to leave game?",
+                ConfirmText = "Let me go!",
+                ConfirmEvent = LeaveGame,
+                CancelText = "Nah, wait...",
+                CancelEvent = null,
+            });
+        }
+
+        m_Notify.Show();
+
+        void LeaveGame()
+        {
+            ShowMenu();
+            HideGame();
+        }
     }
 
     void OnStartGame()
     {
-        m_MenuPanel.SetActive(false);
-        m_GamePanel.SetActive(true);
-        InitGame();
+        HideMenu();
+        ShowGame();
+        StartGame();
     }
 
-    void InitGame()
+    void StartGame()
     {
-        mEmptyCheck.Clear();
-        mCheckPool.RecycleAll();
-        mChessPool.RecycleAll();
+        mIsGameEnd = false;
 
+        RecycleAllToPool();
+        mEmptyCheck.Clear();
         mCheckArray = new Check[m_BoardSize, m_BoardSize];
 
         InitBoard();
@@ -129,13 +112,16 @@ public class GameManager : MonoSingleton<GameManager>
         {
             for (var x = 0; x < m_BoardSize; x++)
             {
-                var checkObj = mCheckPool.GetObj();
+                // true = (xy相加)偶數格, false = (xy相加)奇數格
+                var side = (x + y) % 2 == 0;
+
+                var checkObj = GetCheck(side);
                 var check = checkObj.GetComponent<Check>();
                 check.transform.parent = m_BoardRoot;
                 check.Init(x, y);
                 mCheckArray[x, y] = check;
 
-                var chessObj = mChessPool.GetObj();
+                var chessObj = GetChess(side);
                 var chess = chessObj.GetComponent<Chess>();
                 chess.transform.parent = check.transform;
                 chess.Init(x, y);
@@ -165,10 +151,10 @@ public class GameManager : MonoSingleton<GameManager>
         var firstPos = m_BoardSize - 1;
         var secondPos = m_BoardSize / 2;
         var thirdPos = secondPos - 1;
-        SetFirstRoundMovableChess(firstPos, firstPos);
-        SetFirstRoundMovableChess(secondPos, secondPos);
-        SetFirstRoundMovableChess(thirdPos, thirdPos);
-        SetFirstRoundMovableChess(0, 0);
+        SetCheckCanRemove(firstPos, firstPos);
+        SetCheckCanRemove(secondPos, secondPos);
+        SetCheckCanRemove(thirdPos, thirdPos);
+        SetCheckCanRemove(0, 0);
 
         OnNextRound = WhiteFirstRound;
     }
@@ -184,10 +170,10 @@ public class GameManager : MonoSingleton<GameManager>
         var downPos = emptyPos + Vector2Int.down;
         var leftPos = emptyPos + Vector2Int.left;
         var rightPos = emptyPos + Vector2Int.right;
-        SetFirstRoundMovableChess(upPos);
-        SetFirstRoundMovableChess(downPos);
-        SetFirstRoundMovableChess(leftPos);
-        SetFirstRoundMovableChess(rightPos);
+        SetCheckCanRemove(upPos);
+        SetCheckCanRemove(downPos);
+        SetCheckCanRemove(leftPos);
+        SetCheckCanRemove(rightPos);
 
         OnNextRound = NextRound;
     }
@@ -216,13 +202,15 @@ public class GameManager : MonoSingleton<GameManager>
 
     void GameEnd()
     {
+        mIsGameEnd = true;
+
         var content = Notify.kGameEnd + $"\n Winner is {mLastSideName}!";
         m_Notify.InitNotify(new NotifyData
         {
             Content = content,
             ConfirmText = "Again!",
             ConfirmEvent = InitGame,
-            CancelText = "Fine...",
+            CancelText = "See Board.",
             CancelEvent = null,
         });
 
@@ -401,13 +389,13 @@ public class GameManager : MonoSingleton<GameManager>
     }
     #endregion Path Check
 
-    #region Select Event
-    void SetFirstRoundMovableChess(Vector2Int pos)
+    #region Remove Event
+    void SetCheckCanRemove(Vector2Int pos)
     {
-        SetFirstRoundMovableChess(pos.x, pos.y);
+        SetCheckCanRemove(pos.x, pos.y);
     }
 
-    void SetFirstRoundMovableChess(int x, int y)
+    void SetCheckCanRemove(int x, int y)
     {
         if (!IsPosValid(x, y))
             return;
@@ -422,25 +410,6 @@ public class GameManager : MonoSingleton<GameManager>
             return;
 
         check.SetCanRemove(true);
-    }
-
-    void SetCheckCanMoveFrom(Check check)
-    {
-        if (check.CanMoveFrom)
-            return;
-
-        check.SetCanMoveFrom(true);
-    }
-
-    void SetCheckCanMoveTo(Check check, Action<Check> selectEvent)
-    {
-        if (check.CanMoveTo)
-            return;
-
-        var chess = check.CurrentChess;
-        check.SetCanMoveTo(true);
-        check.RegisterMoveToEvent(selectEvent);
-        OnRoundEnd += check.ClearState;
     }
 
     void ChessRemove(Chess chess)
@@ -462,7 +431,31 @@ public class GameManager : MonoSingleton<GameManager>
         RoundEnd();
         OnNextRound?.Invoke();
     }
+    #endregion
 
+    #region Move Event
+    void SetCheckCanMoveFrom(Check check)
+    {
+        if (check.CanMoveFrom)
+            return;
+
+        check.SetCanMoveFrom(true);
+    }
+
+    void SetCheckCanMoveTo(Check check, Action<Check> selectEvent)
+    {
+        if (check.CanMoveTo)
+            return;
+
+        var chess = check.CurrentChess;
+        check.SetCanMoveTo(true);
+        check.RegisterMoveToEvent(selectEvent);
+        OnRoundEnd += check.ClearState;
+    }
+
+    /// <summary>
+    /// 選擇要操作的棋子
+    /// </summary>
     void ChessSelect(Chess chess)
     {
         OnChessSelect?.Invoke(chess.Pos);
@@ -471,11 +464,16 @@ public class GameManager : MonoSingleton<GameManager>
         mCurSelectFrom = check;
     }
 
+    /// <summary>
+    /// 選擇要跳往的棋格
+    /// </summary>
     void CheckSelect(Check check)
     {
         TryMoveChess(mCurSelectFrom, check);
     }
+    #endregion
 
+    #region Move Chess
     void TryMoveChess(Check fromCheck, Check toCheck)
     {
         //Debug.Log($"TryMoveChess {fromCheck.Pos}, {toCheck.Pos}");
@@ -491,16 +489,13 @@ public class GameManager : MonoSingleton<GameManager>
 
         void MoveAndEndRound()
         {
-            //Debug.Log($"IsMoveValid MoveAndEndRound!");
             MoveChess(fromCheck, toCheck);
             RoundEnd();
             OnNextRound?.Invoke();
         }
 
-        //Debug.Log($"IsMoveValid Can Jump Next? pos {toCheck.Pos}, dir {dir}");
-        //             IsMoveDirectionValid(toCheck.Pos, dir, out var nextCheck) && nextCheck.CurrentChess == null)
         // 可以連跳
-        if (mCurMaxMove > moveTimes)
+        if (ShowHint && mCurMaxMove > moveTimes)
         {
             m_Notify.InitNotify(new NotifyData
             {
@@ -511,7 +506,6 @@ public class GameManager : MonoSingleton<GameManager>
                 CancelEvent = null,
             });
             m_Notify.Show();
-            Debug.Log($"IsMoveValid Can Jump Next? Yes!");
             return;
         }
 
@@ -537,19 +531,30 @@ public class GameManager : MonoSingleton<GameManager>
         if (!IsMoveDirectionValid(normalizedDir))
             return false;
 
-        if (distance % 2 != 0 || distance <= 0)
+        if (!IsMoveDistanceValid(distance))
             return false;
 
-        //Debug.Log($"IsMoveValid IsPathValid? dir {normalizedDir}, distance {distance}");
-        if (!IsPathValid(fromCheck.Pos, normalizedDir, distance))
+        if (!IsMovePathValid(fromCheck.Pos, normalizedDir, distance))
             return false;
 
         moveTimes = distance / 2;
-        //Debug.Log($"IsMoveValid IsPathValid? Yes!");
         return true;
     }
 
-    bool IsPathValid(Vector2Int from, Vector2Int direction, int distance)
+    bool IsMoveDirectionValid(Vector2Int direction)
+    {
+        return direction == Vector2Int.up
+            || direction == Vector2Int.down
+            || direction == Vector2Int.left
+            || direction == Vector2Int.right;
+    }
+
+    bool IsMoveDistanceValid(int distance)
+    {
+        return distance > 0 && distance % 2 == 0;
+    }
+
+    bool IsMovePathValid(Vector2Int from, Vector2Int direction, int distance)
     {
         //Debug.Log($"IsPathValid from {from}, direction {direction}, distance {distance}");
         // 順利走完了，回家ㄅ
@@ -571,15 +576,7 @@ public class GameManager : MonoSingleton<GameManager>
             return false;
 
         distance -= 2;
-        return IsPathValid(nextPos, direction, distance);
-    }
-
-    bool IsMoveDirectionValid(Vector2Int direction)
-    {
-        return direction == Vector2Int.up
-            || direction == Vector2Int.down
-            || direction == Vector2Int.left
-            || direction == Vector2Int.right;
+        return IsMovePathValid(nextPos, direction, distance);
     }
 
     void MoveChess(Check fromCheck, Check toCheck)
@@ -611,83 +608,9 @@ public class GameManager : MonoSingleton<GameManager>
         var check = mCheckArray[pos.x, pos.y];
         var chess = check.RemoveChess();
         mEmptyCheck.Add(check);
-        mChessPool.Recycle(chess);
+        RecycleChess(chess);
         Debug.Log($"Empty {check.XPos}, {check.YPos}");
     }
     #endregion Select Event
-
-    class PoolBase<T> where T : GameObj
-    {
-        Queue<T> mPool = new Queue<T>();
-        List<T> mUsing = new List<T>();
-        Transform mPoolRoot;
-        T mSample;
-
-        public PoolBase(T sample, Transform root)
-        {
-            mSample = sample;
-            mPoolRoot = root;
-        }
-
-        public T GetObj()
-        {
-            T obj;
-            if (mPool.Count == 0)
-            {
-                obj = Instantiate(mSample);
-            }
-            else
-            {
-                obj = mPool.Dequeue();
-            }
-
-            mUsing.Add(obj);
-            return obj;
-        }
-
-        public List<T> GetAllUsing()
-        {
-            return mUsing;
-        }
-
-        public void Recycle(T obj)
-        {
-            if (!mUsing.Contains(obj))
-                return;
-
-            obj.Recycle();
-            obj.transform.parent = mPoolRoot;
-            mPool.Enqueue(obj);
-            mUsing.Remove(obj);
-        }
-
-        public void RecycleAll()
-        {
-            foreach (var obj in mUsing)
-            {
-                obj.Recycle();
-                obj.transform.parent = mPoolRoot;
-                mPool.Enqueue(obj);
-            }
-            mUsing.Clear();
-        }
-
-        public void Clear()
-        {
-            foreach (var obj in mUsing)
-            {
-                obj.Recycle();
-                Destroy(obj);
-            }
-            mUsing.Clear();
-
-            foreach (var obj in mPool)
-            {
-                obj.Recycle();
-                Destroy(obj);
-            }
-            mPool.Clear();
-        }
-    }
 }
 

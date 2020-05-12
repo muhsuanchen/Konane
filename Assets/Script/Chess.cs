@@ -19,7 +19,7 @@ public class Chess : GameObj
 
     RectTransform mRectTrans;
     Action SelectHintEvent;
-    Action<Chess> OnSelectEvent;    
+    Action<Chess> OnSelectEvent;
     Action<Chess> OnRemoveEvent;
     public bool Selectable { get; private set; }
     public bool Removable { get; private set; }
@@ -31,25 +31,14 @@ public class Chess : GameObj
 
         gameObject.name = $"Chess ({x}-{y})";
 
-        InitChessImage();
-
         m_Button.onClick.AddListener(OnSelect);
-        Debug.Log($"Chess Init {x}, {y}");
+
         mRectTrans = gameObject.GetComponent<RectTransform>();
         mRectTrans.localScale = Vector3.one;
 
         UpdateHintVisible();
 
         ResetPos();
-    }
-
-    void InitChessImage()
-    {
-        var images = ImageManager.Instance.GetChessImageBySide(Side);
-        m_Chess.sprite = images.normal;
-        m_Highlight.sprite = images.highlight;
-        m_Selecting.sprite = images.selecting;
-        m_Remove.sprite = images.remove;
     }
 
     public void UpdateHintVisible()
@@ -79,6 +68,8 @@ public class Chess : GameObj
     {
         ClearMaxMove();
         Selecting(false);
+        SetRemovable(false);
+        SetSelectable(false);
     }
 
     #region Event
@@ -137,7 +128,7 @@ public class Chess : GameObj
     {
         if (GameManager.Instance.Round == 1)
         {
-            Debug.Log($"Selecting {Pos} = {active} && {Removable}");
+            //Debug.Log($"Selecting {Pos} = {active} && {Removable}");
             var remove = Removable && active;
             m_Remove.enabled = remove;
             if (remove) OnRemoveEvent?.Invoke(this);
