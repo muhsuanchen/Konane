@@ -12,7 +12,7 @@ public partial class GameManager
 
     void InitMenu()
     {
-        m_StartButton.onClick.AddListener(OnStartGame);
+        m_StartButton.onClick.AddListener(ShowBoardSizeSelector);
     }
 
     void ShowMenu()

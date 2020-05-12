@@ -13,23 +13,21 @@ public partial class GameManager
     GridLayoutGroup m_BoardLayout;
 
     [SerializeField]
+    Text m_Title;
+    [SerializeField]
     Image m_ShowHintImage;
     [SerializeField]
     Button m_ShowHintButton;
     [SerializeField]
     Button m_BackToMenuButton;
 
-    int m_BoardSize = 8;    // 須為偶數
+    int mBoardSize = 8;    // 須為偶數
     float mBoardWidth = 900;
     Color kNormalBtnColor = Color.white;
     Color kSelectBtnColor = Color.red;
 
     void InitGame()
     {
-        var checkWidth = mBoardWidth / m_BoardSize;
-        Debug.Log($"Board Width {mBoardWidth}, {checkWidth}");
-        m_BoardLayout.cellSize = new Vector2(checkWidth, checkWidth);
-
         m_BackToMenuButton.onClick.AddListener(OnBackToMenu);
         m_ShowHintButton.onClick.AddListener(OnShowHint);
         UpdateBtnColor();
@@ -38,6 +36,7 @@ public partial class GameManager
     void ShowGame()
     {
         m_GamePanel.SetActive(true);
+        m_Title.text = string.Empty;
     }
 
     void HideGame()
@@ -66,5 +65,26 @@ public partial class GameManager
     void UpdateBtnColor()
     {
         m_ShowHintImage.color = (ShowHint) ? kSelectBtnColor : kNormalBtnColor;
+    }
+
+    void UpdateBoardSize()
+    {
+        var checkWidth = mBoardWidth / mBoardSize;
+        Debug.Log($"Board Width {mBoardWidth}, {checkWidth}");
+        m_BoardLayout.cellSize = new Vector2(checkWidth, checkWidth);
+    }
+
+    void ShowBoardSizeSelector()
+    {
+        m_Notify.InitNotify(new NotifyData
+        {
+            Content = "Please choose a board size.",
+            ConfirmText = "6x6",
+            ConfirmEvent = () => { mBoardSize = 6; OnStartGame(); },
+            CancelText = "8x8",
+            CancelEvent = () => { mBoardSize = 8; OnStartGame(); },
+        });
+
+        m_Notify.Show();
     }
 }

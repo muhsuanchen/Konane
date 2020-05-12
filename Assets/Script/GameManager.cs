@@ -4,8 +4,8 @@ using UnityEngine;
 
 public enum GameSide
 {
-    Black = 1,  // true
-    White = 0,  // false
+    BLACK = 1,  // true
+    WHITE = 0,  // false
 }
 
 public partial class GameManager : MonoSingleton<GameManager>
@@ -23,8 +23,8 @@ public partial class GameManager : MonoSingleton<GameManager>
     public int Round { get; private set; } = 0;
 
     public bool CurrentSide { get; private set; } = false;
-    string mCurrentSideName => (CurrentSide) ? GameSide.Black.ToString() : GameSide.White.ToString();
-    string mLastSideName => (!CurrentSide) ? GameSide.Black.ToString() : GameSide.White.ToString();
+    string mCurrentSideName => (CurrentSide) ? GameSide.BLACK.ToString() : GameSide.WHITE.ToString();
+    string mLastSideName => (!CurrentSide) ? GameSide.BLACK.ToString() : GameSide.WHITE.ToString();
 
     List<Check> mAllMovableCheck = new List<Check>();
 
@@ -36,6 +36,7 @@ public partial class GameManager : MonoSingleton<GameManager>
     {
         ShowHint = false;
         mEmptyCheck = new List<Check>();
+        m_Notify.Hide();
 
         InitPool();
         InitMenu();
@@ -46,7 +47,6 @@ public partial class GameManager : MonoSingleton<GameManager>
     {
         ShowMenu();
         HideGame();
-        m_Notify.Hide();
     }
 
     void OnBackToMenu()
@@ -66,7 +66,7 @@ public partial class GameManager : MonoSingleton<GameManager>
         {
             m_Notify.InitNotify(new NotifyData
             {
-                Content = "Sure to leave game?",
+                Content = "Sure to leave the game?",
                 ConfirmText = "Let me go!",
                 ConfirmEvent = LeaveGame,
                 CancelText = "Nah, wait...",
@@ -78,8 +78,9 @@ public partial class GameManager : MonoSingleton<GameManager>
 
         void LeaveGame()
         {
-            ShowMenu();
+            ClearGame();
             HideGame();
+            ShowMenu();
         }
     }
 
@@ -94,9 +95,7 @@ public partial class GameManager : MonoSingleton<GameManager>
     {
         mIsGameEnd = false;
 
-        RecycleAllToPool();
-        mEmptyCheck.Clear();
-        mCheckArray = new Check[m_BoardSize, m_BoardSize];
+        mCheckArray = new Check[mBoardSize, mBoardSize];
 
         InitBoard();
 
@@ -108,9 +107,11 @@ public partial class GameManager : MonoSingleton<GameManager>
         OnRoundEnd = null;
         OnChessSelect = null;
 
-        for (var y = 0; y < m_BoardSize; y++)
+        UpdateBoardSize();
+
+        for (var y = 0; y < mBoardSize; y++)
         {
-            for (var x = 0; x < m_BoardSize; x++)
+            for (var x = 0; x < mBoardSize; x++)
             {
                 // true = (xy相加)偶數格, false = (xy相加)奇數格
                 var side = (x + y) % 2 == 0;
@@ -130,10 +131,21 @@ public partial class GameManager : MonoSingleton<GameManager>
                 check.RegisterRemoveEvent(ChessRemove);
                 check.RegisterSelectEvent(ChessSelect);
 
-                OnChessSelect += check.OnSomeChessSelected;
                 OnRoundEnd += check.ClearState;
+                OnChessSelect += check.OnSomeChessSelected;
             }
         }
+    }
+
+    void ClearGame()
+    {
+        RecycleAllToPool();
+
+        mCurMaxMove = 0;
+        mEmptyCheck.Clear();
+        mAllMovableCheck.Clear();
+        mCurSelectFrom = null;
+        OnNextRound = null;
     }
 
     #region Round
@@ -146,10 +158,10 @@ public partial class GameManager : MonoSingleton<GameManager>
     {
         Round = 1;
         CurrentSide = true;
-        Debug.Log($"------- {mCurrentSideName} Round {Round} -------");
+        m_Title.text = $"Round {Round} {mCurrentSideName}";
 
-        var firstPos = m_BoardSize - 1;
-        var secondPos = m_BoardSize / 2;
+        var firstPos = mBoardSize - 1;
+        var secondPos = mBoardSize / 2;
         var thirdPos = secondPos - 1;
         SetCheckCanRemove(firstPos, firstPos);
         SetCheckCanRemove(secondPos, secondPos);
@@ -163,7 +175,7 @@ public partial class GameManager : MonoSingleton<GameManager>
     {
         Round = 1;
         CurrentSide = false;
-        Debug.Log($"------- {mCurrentSideName} Round {Round} -------");
+        m_Title.text = $"Round {Round} {mCurrentSideName}";
 
         var emptyPos = mEmptyCheck[0].Pos;
         var upPos = emptyPos + Vector2Int.up;
@@ -182,9 +194,8 @@ public partial class GameManager : MonoSingleton<GameManager>
     {
         CurrentSide = !CurrentSide;
         Round += (CurrentSide) ? 1 : 0;
-        Debug.Log($"------- {mCurrentSideName} Round {Round} -------");
+        m_Title.text = $"Round {Round} {mCurrentSideName}";
 
-        mCurMaxMove = 0;
         if (!CheckMovablePath(CurrentSide))
         {
             GameEnd();
@@ -197,6 +208,9 @@ public partial class GameManager : MonoSingleton<GameManager>
     void RoundEnd()
     {
         OnRoundEnd?.Invoke();
+
+        mCurMaxMove = 0;
+        mAllMovableCheck.Clear();
         mCurSelectFrom = null;
     }
 
@@ -204,13 +218,16 @@ public partial class GameManager : MonoSingleton<GameManager>
     {
         mIsGameEnd = true;
 
-        var content = Notify.kGameEnd + $"\n Winner is {mLastSideName}!";
+        var winnerText = $"Winner is {mLastSideName}!";
+        m_Title.text = winnerText;
+
+        var notifyText = $"{Notify.kGameEnd}\n{winnerText}";
         m_Notify.InitNotify(new NotifyData
         {
-            Content = content,
+            Content = notifyText,
             ConfirmText = "Again!",
             ConfirmEvent = InitGame,
-            CancelText = "See Board.",
+            CancelText = "See Board",
             CancelEvent = null,
         });
 
@@ -365,8 +382,8 @@ public partial class GameManager : MonoSingleton<GameManager>
     /// </summary>
     bool IsPosValid(int x, int y)
     {
-        return x >= 0 && x < m_BoardSize
-            && y >= 0 && y < m_BoardSize;
+        return x >= 0 && x < mBoardSize
+            && y >= 0 && y < mBoardSize;
     }
 
     void SetMovePathInfo(Check check, Vector2Int direction, LinkedList<Check> movePath, int depth)
@@ -500,9 +517,9 @@ public partial class GameManager : MonoSingleton<GameManager>
             m_Notify.InitNotify(new NotifyData
             {
                 Content = Notify.kBetterChoice,
-                ConfirmText = "Yes!",
+                ConfirmText = "I'm sure.",
                 ConfirmEvent = MoveAndEndRound,
-                CancelText = "No!",
+                CancelText = "Wait!",
                 CancelEvent = null,
             });
             m_Notify.Show();

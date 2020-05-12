@@ -14,7 +14,7 @@ public class NotifyData
 public class Notify : MonoBehaviour
 {
     public static string kBetterChoice = "Are you sure?\nYou have a better choice!";
-    public static string kGameEnd = "GameEnd!";
+    public static string kGameEnd = "Game Over!";
 
     [SerializeField]
     Text m_Content;

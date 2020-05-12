@@ -5,7 +5,7 @@ public class GameObj : MonoBehaviour
     [SerializeField]
     GameSide mGameSide;  // true = (xy相加)偶數格, false = (xy相加)奇數格
 
-    public bool Side => mGameSide == GameSide.Black;
+    public bool Side => mGameSide == GameSide.BLACK;
     public int XPos { get; private set; }
     public int YPos { get; private set; }
 
