@@ -65,16 +65,6 @@ public class Check : GameObj
     }
 
     #region Event
-    public void RegisterSelectEvent(Action<Chess> callback)
-    {
-        CurrentChess.RegisterSelectEvent(callback);
-    }
-
-    public void RegisterRemoveEvent(Action<Chess> callback)
-    {
-        CurrentChess.RegisterRemoveEvent(callback);
-    }
-
     public void RegisterMoveToEvent(Action<Check> callback)
     {
         OnMoveToEvent += callback;
@@ -152,13 +142,15 @@ public class Check : GameObj
     #endregion
 
     #region Chess
-    public void SetChess(Chess chess)
+    public void SetChess(Chess chess, Action<Chess> selectEvent, Action<Chess> removeEvent)
     {
         CurrentChess = chess;
         CurrentChess.transform.parent = transform;
         CurrentChess.ResetPos();
         CurrentChess.SetPos(XPos, YPos);
         CurrentChess.RegisterSelectHintEvent(ShowChessPathHint);
+        CurrentChess.RegisterSelectEvent(selectEvent);
+        CurrentChess.RegisterRemoveEvent(removeEvent);
     }
 
     public Chess RemoveChess()
@@ -167,7 +159,7 @@ public class Check : GameObj
             return null;
 
         var chess = CurrentChess;
-        CurrentChess.UnregisterSelectHintEvent(ShowChessPathHint);
+        CurrentChess.ClearEvent();
         CurrentChess = null;
         return chess;
     }

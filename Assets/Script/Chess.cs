@@ -55,13 +55,19 @@ public class Chess : GameObj
     public override void Recycle()
     {
         ClearState();
+        ClearEvent();
         SetPos(-1, -1);
 
-        OnSelectEvent = null;
-        OnRemoveEvent = null;
         m_Button.onClick.RemoveAllListeners();
 
         base.Recycle();
+    }
+
+    public void ClearEvent()
+    {
+        SelectHintEvent = null;
+        OnSelectEvent = null;
+        OnRemoveEvent = null;
     }
 
     public void ClearState()
@@ -76,11 +82,6 @@ public class Chess : GameObj
     public void RegisterSelectHintEvent(Action callback)
     {
         SelectHintEvent += callback;
-    }
-
-    public void UnregisterSelectHintEvent(Action callback)
-    {
-        SelectHintEvent -= callback;
     }
 
     public void RegisterSelectEvent(Action<Chess> callback)

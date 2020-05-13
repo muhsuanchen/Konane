@@ -75,13 +75,13 @@ public partial class GameManager : MonoSingleton<GameManager>
         }
 
         m_Notify.Show();
+    }
 
-        void LeaveGame()
-        {
-            ClearGame();
-            HideGame();
-            ShowMenu();
-        }
+    void LeaveGame()
+    {
+        ClearGame();
+        HideGame();
+        ShowMenu();
     }
 
     void OnStartGame()
@@ -127,9 +127,7 @@ public partial class GameManager : MonoSingleton<GameManager>
                 chess.transform.parent = check.transform;
                 chess.Init(x, y);
 
-                check.SetChess(chess);
-                check.RegisterRemoveEvent(ChessRemove);
-                check.RegisterSelectEvent(ChessSelect);
+                check.SetChess(chess, ChessSelect, ChessRemove);
 
                 OnRoundEnd += check.ClearState;
                 OnChessSelect += check.OnSomeChessSelected;
@@ -225,8 +223,8 @@ public partial class GameManager : MonoSingleton<GameManager>
         m_Notify.InitNotify(new NotifyData
         {
             Content = notifyText,
-            ConfirmText = "Again!",
-            ConfirmEvent = InitGame,
+            ConfirmText = "OK",
+            ConfirmEvent = LeaveGame,
             CancelText = "See Board",
             CancelEvent = null,
         });
@@ -612,7 +610,7 @@ public partial class GameManager : MonoSingleton<GameManager>
 
         // Move My Chess
         var moveChess = fromCheck.RemoveChess();
-        toCheck.SetChess(moveChess);
+        toCheck.SetChess(moveChess, ChessSelect, ChessRemove);
         mEmptyCheck.Remove(toCheck);
         mEmptyCheck.Add(fromCheck);
     }
