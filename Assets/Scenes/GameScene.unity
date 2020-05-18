@@ -227,9 +227,8 @@ RectTransform:
   m_Children:
   - {fileID: 1712606630}
   - {fileID: 227787711}
-  - {fileID: 648535367}
   m_Father: {fileID: 1989438545}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -893,7 +892,7 @@ RectTransform:
   - {fileID: 1020659756}
   - {fileID: 531595323}
   m_Father: {fileID: 1989438545}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -925,12 +924,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 648535366}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 224494967}
-  m_RootOrder: 2
+  m_Father: {fileID: 1989438545}
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
@@ -1158,7 +1157,7 @@ RectTransform:
   - {fileID: 824276972}
   - {fileID: 873164105}
   m_Father: {fileID: 1989438545}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -1298,7 +1297,7 @@ MonoBehaviour:
   m_BackToMenuButton: {fileID: 1020659757}
   m_MenuPanel: {fileID: 224494966}
   m_StartButton: {fileID: 227787712}
-  m_Version: {fileID: 0}
+  m_Version: {fileID: 648535368}
   m_BlackCheckSample: {fileID: 268974966}
   m_BlackCheckPool: {fileID: 2084192135}
   m_BlackChessSample: {fileID: 1517211560}
@@ -3325,6 +3324,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 1552934162}
+  - {fileID: 648535367}
   - {fileID: 224494967}
   - {fileID: 553160352}
   - {fileID: 747585910}

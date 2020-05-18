@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum GameSide
 {
@@ -12,6 +13,9 @@ public partial class GameManager : MonoSingleton<GameManager>
 {
     [SerializeField]
     Notify m_Notify;
+
+    [SerializeField]
+    Text m_Version;
 
     Check[,] mCheckArray;
     List<Check> mEmptyCheck;
@@ -37,6 +41,8 @@ public partial class GameManager : MonoSingleton<GameManager>
         ShowHint = false;
         mEmptyCheck = new List<Check>();
         m_Notify.Hide();
+
+        m_Version.text = $"v{Version.VERSION}";
 
         InitPool();
         InitMenu();
