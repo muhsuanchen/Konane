@@ -1,5 +1,5 @@
 # Konane
-Hawaiian Checker
+Hawaiian Checker  
 Unity Project Version: 2019.3.3f1
 
 ## 程式介面
