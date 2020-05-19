@@ -10,7 +10,7 @@ using UnityEngine;
 public class GameBuilder
 {
     const string kFileName = "konane";
-    const string kRevisionPath = "Assets/Revision.cs";
+    const string kVersionPath = "Assets/Version.cs";
 
     static readonly Dictionary<string, string> CommandLindArgs = new Dictionary<string, string>();
 
@@ -50,7 +50,7 @@ public class GameBuilder
         GetCmdArg("--buildingVersion", out var version);
         GetCmdArg("--buildingFolder", out var outputPath);
 
-        RefreshRevision(version);
+        RefreshVersion(version);
 
         var target = GetCurrentTarget();
         var group = BuildTargetToGroup(target);
@@ -231,15 +231,15 @@ public class GameBuilder
     [MenuItem("Tools/Create Reversion File")]
     static void CreateReversionFile()
     {
-        RefreshRevision("0.0.0");
+        RefreshVersion("0.0.0");
     }
 
-    static void RefreshRevision(string svnRevision)
+    static void RefreshVersion(string version)
     {
-        if (Directory.Exists(kRevisionPath))
-            AssetDatabase.DeleteAsset(kRevisionPath);
+        if (Directory.Exists(kVersionPath))
+            AssetDatabase.DeleteAsset(kVersionPath);
 
-        using (var sw = new StreamWriter($"{Directory.GetCurrentDirectory()}/{kRevisionPath}", false, new UTF8Encoding(true)))
+        using (var sw = new StreamWriter($"{Directory.GetCurrentDirectory()}/{kVersionPath}", false, new UTF8Encoding(true)))
         {
             sw.WriteLine(
                 "namespace TrainingProject {{ " +
@@ -247,7 +247,7 @@ public class GameBuilder
                     "{{ " +
                         "public const string VERSION = \"{0}\";" +
                     " }}" +
-                " }}", svnRevision);
+                " }}", version);
             sw.Close();
         }
 
