@@ -236,6 +236,9 @@ public class GameBuilder
 
     static void RefreshVersion(string version)
     {
+        if (string.IsNullOrEmpty(version))
+            return;
+
         if (Directory.Exists(kVersionPath))
             AssetDatabase.DeleteAsset(kVersionPath);
 
