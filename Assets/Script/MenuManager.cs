@@ -23,8 +23,8 @@ namespace TrainingProject
         {
             m_Version.text = $"v{Version.VERSION}";
 
-            m_StartButton.onClick.AddListener(SwitchToGameScene);
-            m_StartLastGameButton.onClick.AddListener(StartLastGameWithSize);
+            m_StartButton.onClick.AddListener(StartNewGame);
+            m_StartLastGameButton.onClick.AddListener(ResumeLastGame);
             m_ExitButton.onClick.AddListener(ShowExitGameNotify);
         }
 
@@ -33,10 +33,15 @@ namespace TrainingProject
             m_StartLastGameButton.interactable = GameStateRecorder.HaveGameRecord();
         }
 
-        void StartLastGameWithSize()
+        void StartNewGame()
+        {
+            GameSetting.Instance.SetStartWithRecord(false);
+            SwitchToGameScene();
+        }
+
+        void ResumeLastGame()
         {
             GameSetting.Instance.SetStartWithRecord(true);
-
             SwitchToGameScene();
         }
 
