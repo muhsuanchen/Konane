@@ -15,32 +15,33 @@ namespace TrainingProject
         [SerializeField]
         Button m_StartButton;
 
+        [SerializeField]
+        Button m_StartLastGameButton;
+
         protected override void Awake()
         {
             m_Version.text = $"v{Version.VERSION}";
 
-            m_StartButton.onClick.AddListener(ShowBoardSizeSelector);
+            m_StartButton.onClick.AddListener(SwitchToGameScene);
+            m_StartLastGameButton.onClick.AddListener(StartLastGameWithSize);
 
             DontDestroyOnLoad(m_Undead);
         }
 
-        void ShowBoardSizeSelector()
+        void Start()
         {
-            Notify.Instance.InitNotify(new NotifyData
-            {
-                Content = "Please choose a board size.",
-                ConfirmText = "6x6",
-                ConfirmEvent = () => StartGameWithSize(6),
-                CancelText = "8x8",
-                CancelEvent = () => StartGameWithSize(8),
-            });
-
-            Notify.Instance.Show();
+            m_StartLastGameButton.interactable = GameStateRecorder.HaveGameRecord();
         }
 
-        void StartGameWithSize(int size)
+        void StartLastGameWithSize()
         {
-            GameSetting.Instance.SetBoardSize(size);
+            GameSetting.Instance.SetStartWithRecord(true);
+
+            SwitchToGameScene();
+        }
+
+        void SwitchToGameScene()
+        {
             SceneManager.LoadScene(Scenes.GameScene.ToString(), LoadSceneMode.Single);
         }
     }

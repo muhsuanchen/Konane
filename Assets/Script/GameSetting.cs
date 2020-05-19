@@ -14,6 +14,7 @@ namespace TrainingProject
     {
         public int BoardSize { get; private set; } = 6;
         public bool ShowHint { get; private set; } = false;
+        public bool RestartLastGame { get; private set; } = false;
 
         public void SetBoardSize(int size)
         {
@@ -31,6 +32,11 @@ namespace TrainingProject
         public void SetShowHint(bool show)
         {
             ShowHint = show;
+        }
+
+        public void SetStartWithRecord(bool active)
+        {
+            RestartLastGame = active;
         }
     }
 }

@@ -36,6 +36,9 @@ namespace TrainingProject
         Check[,] mCheckArray;
         List<Check> mEmptyCheck;
 
+        int mBoardSize = 6;
+        float mBoardWidth = 900;
+
         event Action OnNextRound;
         event Action OnRoundEnd;
         event Action<Vector2Int> OnChessSelect;
@@ -52,10 +55,8 @@ namespace TrainingProject
         int mCurMaxMove = 0;
         bool mIsGameEnd = false;
 
-        int mBoardSize = 6;
-        float mBoardWidth = 900;
-        Color kNormalBtnColor = Color.white;
-        Color kSelectBtnColor = Color.red;
+        Color mNormalBtnColor = Color.white;
+        Color mSelectBtnColor = Color.red;
 
         protected override void Awake()
         {
@@ -69,7 +70,10 @@ namespace TrainingProject
 
         private void Start()
         {
-            StartGame();
+            if (GameSetting.Instance.RestartLastGame)
+                StartGameWithRecord();
+            else
+                ShowBoardSizeSelectorAndStart();
         }
 
         #region Btn Event
@@ -146,10 +150,55 @@ namespace TrainingProject
             OnNextRound = null;
         }
 
-        void StartGame()
+        void StartGameWithRecord()
         {
             mIsGameEnd = false;
 
+            if (!TryLoadGameFromPref())
+            {
+                Notify.Instance.InitNotify(new NotifyData
+                {
+                    Content = "Load Failed.\nStart a new game?",
+                    ConfirmText = "OK!",
+                    ConfirmEvent = ShowBoardSizeSelectorAndStart,
+                    CancelText = "Back to menu.",
+                    CancelEvent = LeaveGame,
+                });
+
+                Notify.Instance.Show();
+            }
+
+            if (Round == 0)
+                StartRound();
+            else if (Round == 1 && CurrentSide)
+                WhiteFirstRound();
+            else
+                NextRound();
+        }
+
+        void ShowBoardSizeSelectorAndStart()
+        {
+            GameSetting.Instance.SetStartWithRecord(false);
+
+            Notify.Instance.InitNotify(new NotifyData
+            {
+                Content = "Please choose a board size.",
+                ConfirmText = "6x6",
+                ConfirmEvent = () => StartGame(6),
+                CancelText = "8x8",
+                CancelEvent = () => StartGame(8),
+            });
+
+            Notify.Instance.Show();
+        }
+
+        void StartGame(int size)
+        {
+            mIsGameEnd = false;
+
+            ClearRecord();
+
+            GameSetting.Instance.SetBoardSize(size);
             mBoardSize = GameSetting.Instance.BoardSize;
             mCheckArray = new Check[mBoardSize, mBoardSize];
 
@@ -165,12 +214,12 @@ namespace TrainingProject
 
             UpdateBoardSize();
 
-            for (var y = 0; y < mBoardSize; y++)
+            for (var x = 0; x < mBoardSize; x++)
             {
-                for (var x = 0; x < mBoardSize; x++)
+                for (var y = 0; y < mBoardSize; y++)
                 {
                     // true = (xy相加)偶數格, false = (xy相加)奇數格
-                    var side = (x + y) % 2 == 0;
+                    var side = GetSideFromXY(x, y);
 
                     var checkObj = GetCheck(side);
                     var check = checkObj.GetComponent<Check>();
@@ -182,11 +231,10 @@ namespace TrainingProject
                     var chess = chessObj.GetComponent<Chess>();
                     chess.transform.parent = check.transform;
                     chess.Init(x, y);
-
                     check.SetChess(chess, ChessSelect, ChessRemove);
+                    OnChessSelect += check.OnSomeChessSelected;
 
                     OnRoundEnd += check.ClearState;
-                    OnChessSelect += check.OnSomeChessSelected;
                 }
             }
         }
@@ -201,8 +249,8 @@ namespace TrainingProject
         void UpdateBtnColor()
         {
             m_ShowHintImage.color = (GameSetting.Instance.ShowHint)
-                                    ? kSelectBtnColor
-                                    : kNormalBtnColor;
+                                    ? mSelectBtnColor
+                                    : mNormalBtnColor;
         }
 
         #region Round
@@ -269,11 +317,15 @@ namespace TrainingProject
             mCurMaxMove = 0;
             mAllMovableCheck.Clear();
             mCurSelectFrom = null;
+
+            RecordCurrentGameToPref();
         }
 
         void GameEnd()
         {
             mIsGameEnd = true;
+
+            ClearRecord();
 
             var winnerText = $"Winner is {mLastSideName}!";
             m_Title.text = winnerText;

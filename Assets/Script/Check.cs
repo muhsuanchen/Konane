@@ -17,6 +17,7 @@ namespace TrainingProject
         RectTransform mRectTrans;
         Action<Check> OnMoveToEvent;
 
+        public bool HaveChess => CurrentChess != null;
         public Chess CurrentChess { get; private set; }
         public bool CanRemove => (CurrentChess == null) ? false : CurrentChess.Removable;
         public bool CanMoveFrom => (CurrentChess == null) ? false : CurrentChess.Selectable;
