@@ -45,7 +45,7 @@ namespace TrainingProject
 
         public void UpdateHintVisible()
         {
-            m_MaxMoveText.enabled = GameManager.ShowHint;
+            m_MaxMoveText.enabled = GameSetting.Instance.ShowHint;
         }
 
         public void ResetPos()

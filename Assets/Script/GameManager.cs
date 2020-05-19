@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace TrainingProject
@@ -14,10 +15,23 @@ namespace TrainingProject
     public partial class GameManager : MonoSingleton<GameManager>
     {
         [SerializeField]
-        Notify m_Notify;
+        Text m_Version;
 
         [SerializeField]
-        Text m_Version;
+        GameObject m_GamePanel;
+        [SerializeField]
+        Transform m_BoardRoot;
+        [SerializeField]
+        GridLayoutGroup m_BoardLayout;
+
+        [SerializeField]
+        Text m_Title;
+        [SerializeField]
+        Image m_ShowHintImage;
+        [SerializeField]
+        Button m_ShowHintButton;
+        [SerializeField]
+        Button m_BackToMenuButton;
 
         Check[,] mCheckArray;
         List<Check> mEmptyCheck;
@@ -38,30 +52,50 @@ namespace TrainingProject
         int mCurMaxMove = 0;
         bool mIsGameEnd = false;
 
+        int mBoardSize = 6;
+        float mBoardWidth = 900;
+        Color kNormalBtnColor = Color.white;
+        Color kSelectBtnColor = Color.red;
+
         protected override void Awake()
         {
-            ShowHint = false;
             mEmptyCheck = new List<Check>();
-            m_Notify.Hide();
 
             m_Version.text = $"v{Version.VERSION}";
 
             InitPool();
-            InitMenu();
             InitGame();
         }
 
-        void Start()
+        private void Start()
         {
-            ShowMenu();
-            HideGame();
+            StartGame();
+        }
+
+        #region Btn Event
+        void OnShowHint()
+        {
+            GameSetting.Instance.SwitchShowHint();
+            UpdateBtnColor();
+
+            var allBlackUsing = mBlackChessPool.GetAllUsing();
+            foreach (var chess in allBlackUsing)
+            {
+                chess.UpdateHintVisible();
+            }
+
+            var allWhiteUsing = mWhiteChessPool.GetAllUsing();
+            foreach (var chess in allWhiteUsing)
+            {
+                chess.UpdateHintVisible();
+            }
         }
 
         void OnBackToMenu()
         {
             if (mIsGameEnd)
             {
-                m_Notify.InitNotify(new NotifyData
+                Notify.Instance.InitNotify(new NotifyData
                 {
                     Content = "Sure to back to menu?",
                     ConfirmText = "Yah!",
@@ -72,7 +106,7 @@ namespace TrainingProject
             }
             else
             {
-                m_Notify.InitNotify(new NotifyData
+                Notify.Instance.InitNotify(new NotifyData
                 {
                     Content = "Sure to leave the game?",
                     ConfirmText = "Let me go!",
@@ -82,27 +116,41 @@ namespace TrainingProject
                 });
             }
 
-            m_Notify.Show();
+            Notify.Instance.Show();
+        }
+        #endregion
+
+        void InitGame()
+        {
+            m_Title.text = string.Empty;
+            m_BackToMenuButton.onClick.AddListener(OnBackToMenu);
+            m_ShowHintButton.onClick.AddListener(OnShowHint);
+            UpdateBtnColor();
         }
 
         void LeaveGame()
         {
             ClearGame();
-            HideGame();
-            ShowMenu();
+
+            SceneManager.LoadScene(Scenes.MenuScene.ToString(), LoadSceneMode.Single);
         }
 
-        void OnStartGame()
+        void ClearGame()
         {
-            HideMenu();
-            ShowGame();
-            StartGame();
+            RecycleAllToPool();
+
+            mCurMaxMove = 0;
+            mEmptyCheck.Clear();
+            mAllMovableCheck.Clear();
+            mCurSelectFrom = null;
+            OnNextRound = null;
         }
 
         void StartGame()
         {
             mIsGameEnd = false;
 
+            mBoardSize = GameSetting.Instance.BoardSize;
             mCheckArray = new Check[mBoardSize, mBoardSize];
 
             InitBoard();
@@ -143,15 +191,18 @@ namespace TrainingProject
             }
         }
 
-        void ClearGame()
+        void UpdateBoardSize()
         {
-            RecycleAllToPool();
+            var checkWidth = mBoardWidth / mBoardSize;
+            Debug.Log($"Board Width {mBoardWidth}, {checkWidth}");
+            m_BoardLayout.cellSize = new Vector2(checkWidth, checkWidth);
+        }
 
-            mCurMaxMove = 0;
-            mEmptyCheck.Clear();
-            mAllMovableCheck.Clear();
-            mCurSelectFrom = null;
-            OnNextRound = null;
+        void UpdateBtnColor()
+        {
+            m_ShowHintImage.color = (GameSetting.Instance.ShowHint)
+                                    ? kSelectBtnColor
+                                    : kNormalBtnColor;
         }
 
         #region Round
@@ -228,7 +279,7 @@ namespace TrainingProject
             m_Title.text = winnerText;
 
             var notifyText = $"{Notify.kGameEnd}\n{winnerText}";
-            m_Notify.InitNotify(new NotifyData
+            Notify.Instance.InitNotify(new NotifyData
             {
                 Content = notifyText,
                 ConfirmText = "OK",
@@ -237,7 +288,7 @@ namespace TrainingProject
                 CancelEvent = null,
             });
 
-            m_Notify.Show();
+            Notify.Instance.Show();
         }
 
         #endregion Round
@@ -518,9 +569,9 @@ namespace TrainingProject
             }
 
             // 可以連跳
-            if (ShowHint && mCurMaxMove > moveTimes)
+            if (GameSetting.Instance.ShowHint && mCurMaxMove > moveTimes)
             {
-                m_Notify.InitNotify(new NotifyData
+                Notify.Instance.InitNotify(new NotifyData
                 {
                     Content = Notify.kBetterChoice,
                     ConfirmText = "I'm sure.",
@@ -528,7 +579,7 @@ namespace TrainingProject
                     CancelText = "Wait!",
                     CancelEvent = null,
                 });
-                m_Notify.Show();
+                Notify.Instance.Show();
                 return;
             }
 

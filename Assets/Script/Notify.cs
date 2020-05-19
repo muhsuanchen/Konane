@@ -13,7 +13,7 @@ namespace TrainingProject
         public Action CancelEvent;
     }
 
-    public class Notify : MonoBehaviour
+    public class Notify : MonoSingleton<Notify>
     {
         public static string kBetterChoice = "Are you sure?\nYou have a better choice!";
         public static string kGameEnd = "Game Over!";
@@ -35,6 +35,8 @@ namespace TrainingProject
         // Start is called before the first frame update
         void Start()
         {
+            Hide();
+
             m_ConfirmButton.onClick.AddListener(OnConfirm);
             m_CancelButton.onClick.AddListener(OnCancel);
         }
