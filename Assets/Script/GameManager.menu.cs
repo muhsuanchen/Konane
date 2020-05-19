@@ -1,25 +1,28 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-public partial class GameManager
+namespace TrainingProject
 {
-    [SerializeField]
-    GameObject m_MenuPanel;
-    [SerializeField]
-    Button m_StartButton;
-
-    void InitMenu()
+    public partial class GameManager
     {
-        m_StartButton.onClick.AddListener(ShowBoardSizeSelector);
-    }
+        [SerializeField]
+        GameObject m_MenuPanel;
+        [SerializeField]
+        Button m_StartButton;
 
-    void ShowMenu()
-    {
-        m_MenuPanel.SetActive(true);
-    }
+        void InitMenu()
+        {
+            m_StartButton.onClick.AddListener(ShowBoardSizeSelector);
+        }
 
-    void HideMenu()
-    {
-        m_MenuPanel.SetActive(false);
+        void ShowMenu()
+        {
+            m_MenuPanel.SetActive(true);
+        }
+
+        void HideMenu()
+        {
+            m_MenuPanel.SetActive(false);
+        }
     }
 }

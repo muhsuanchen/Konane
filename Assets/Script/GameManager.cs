@@ -3,635 +3,637 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public enum GameSide
+namespace TrainingProject
 {
-    BLACK = 1,  // true
-    WHITE = 0,  // false
-}
-
-public partial class GameManager : MonoSingleton<GameManager>
-{
-    [SerializeField]
-    Notify m_Notify;
-
-    [SerializeField]
-    Text m_Version;
-
-    Check[,] mCheckArray;
-    List<Check> mEmptyCheck;
-
-    event Action OnNextRound;
-    event Action OnRoundEnd;
-    event Action<Vector2Int> OnChessSelect;
-
-    public int Round { get; private set; } = 0;
-
-    public bool CurrentSide { get; private set; } = false;
-    string mCurrentSideName => (CurrentSide) ? GameSide.BLACK.ToString() : GameSide.WHITE.ToString();
-    string mLastSideName => (!CurrentSide) ? GameSide.BLACK.ToString() : GameSide.WHITE.ToString();
-
-    List<Check> mAllMovableCheck = new List<Check>();
-
-    Check mCurSelectFrom;
-    int mCurMaxMove = 0;
-    bool mIsGameEnd = false;
-
-    protected override void Awake()
+    public enum GameSide
     {
-        ShowHint = false;
-        mEmptyCheck = new List<Check>();
-        m_Notify.Hide();
-
-        m_Version.text = $"v{Version.VERSION}";
-
-        InitPool();
-        InitMenu();
-        InitGame();
+        BLACK = 1,  // true
+        WHITE = 0,  // false
     }
 
-    void Start()
+    public partial class GameManager : MonoSingleton<GameManager>
     {
-        ShowMenu();
-        HideGame();
-    }
+        [SerializeField]
+        Notify m_Notify;
 
-    void OnBackToMenu()
-    {
-        if (mIsGameEnd)
+        [SerializeField]
+        Text m_Version;
+
+        Check[,] mCheckArray;
+        List<Check> mEmptyCheck;
+
+        event Action OnNextRound;
+        event Action OnRoundEnd;
+        event Action<Vector2Int> OnChessSelect;
+
+        public int Round { get; private set; } = 0;
+
+        public bool CurrentSide { get; private set; } = false;
+        string mCurrentSideName => (CurrentSide) ? GameSide.BLACK.ToString() : GameSide.WHITE.ToString();
+        string mLastSideName => (!CurrentSide) ? GameSide.BLACK.ToString() : GameSide.WHITE.ToString();
+
+        List<Check> mAllMovableCheck = new List<Check>();
+
+        Check mCurSelectFrom;
+        int mCurMaxMove = 0;
+        bool mIsGameEnd = false;
+
+        protected override void Awake()
         {
-            m_Notify.InitNotify(new NotifyData
-            {
-                Content = "Sure to back to menu?",
-                ConfirmText = "Yah!",
-                ConfirmEvent = LeaveGame,
-                CancelText = "Nah, wait...",
-                CancelEvent = null,
-            });
-        }
-        else
-        {
-            m_Notify.InitNotify(new NotifyData
-            {
-                Content = "Sure to leave the game?",
-                ConfirmText = "Let me go!",
-                ConfirmEvent = LeaveGame,
-                CancelText = "Nah, wait...",
-                CancelEvent = null,
-            });
+            ShowHint = false;
+            mEmptyCheck = new List<Check>();
+            m_Notify.Hide();
+
+            m_Version.text = $"v{Version.VERSION}";
+
+            InitPool();
+            InitMenu();
+            InitGame();
         }
 
-        m_Notify.Show();
-    }
-
-    void LeaveGame()
-    {
-        ClearGame();
-        HideGame();
-        ShowMenu();
-    }
-
-    void OnStartGame()
-    {
-        HideMenu();
-        ShowGame();
-        StartGame();
-    }
-
-    void StartGame()
-    {
-        mIsGameEnd = false;
-
-        mCheckArray = new Check[mBoardSize, mBoardSize];
-
-        InitBoard();
-
-        StartRound();
-    }
-
-    void InitBoard()
-    {
-        OnRoundEnd = null;
-        OnChessSelect = null;
-
-        UpdateBoardSize();
-
-        for (var y = 0; y < mBoardSize; y++)
+        void Start()
         {
-            for (var x = 0; x < mBoardSize; x++)
+            ShowMenu();
+            HideGame();
+        }
+
+        void OnBackToMenu()
+        {
+            if (mIsGameEnd)
             {
-                // true = (xy相加)偶數格, false = (xy相加)奇數格
-                var side = (x + y) % 2 == 0;
+                m_Notify.InitNotify(new NotifyData
+                {
+                    Content = "Sure to back to menu?",
+                    ConfirmText = "Yah!",
+                    ConfirmEvent = LeaveGame,
+                    CancelText = "Nah, wait...",
+                    CancelEvent = null,
+                });
+            }
+            else
+            {
+                m_Notify.InitNotify(new NotifyData
+                {
+                    Content = "Sure to leave the game?",
+                    ConfirmText = "Let me go!",
+                    ConfirmEvent = LeaveGame,
+                    CancelText = "Nah, wait...",
+                    CancelEvent = null,
+                });
+            }
 
-                var checkObj = GetCheck(side);
-                var check = checkObj.GetComponent<Check>();
-                check.transform.parent = m_BoardRoot;
-                check.Init(x, y);
-                mCheckArray[x, y] = check;
+            m_Notify.Show();
+        }
 
-                var chessObj = GetChess(side);
-                var chess = chessObj.GetComponent<Chess>();
-                chess.transform.parent = check.transform;
-                chess.Init(x, y);
+        void LeaveGame()
+        {
+            ClearGame();
+            HideGame();
+            ShowMenu();
+        }
 
-                check.SetChess(chess, ChessSelect, ChessRemove);
+        void OnStartGame()
+        {
+            HideMenu();
+            ShowGame();
+            StartGame();
+        }
 
-                OnRoundEnd += check.ClearState;
-                OnChessSelect += check.OnSomeChessSelected;
+        void StartGame()
+        {
+            mIsGameEnd = false;
+
+            mCheckArray = new Check[mBoardSize, mBoardSize];
+
+            InitBoard();
+
+            StartRound();
+        }
+
+        void InitBoard()
+        {
+            OnRoundEnd = null;
+            OnChessSelect = null;
+
+            UpdateBoardSize();
+
+            for (var y = 0; y < mBoardSize; y++)
+            {
+                for (var x = 0; x < mBoardSize; x++)
+                {
+                    // true = (xy相加)偶數格, false = (xy相加)奇數格
+                    var side = (x + y) % 2 == 0;
+
+                    var checkObj = GetCheck(side);
+                    var check = checkObj.GetComponent<Check>();
+                    check.transform.parent = m_BoardRoot;
+                    check.Init(x, y);
+                    mCheckArray[x, y] = check;
+
+                    var chessObj = GetChess(side);
+                    var chess = chessObj.GetComponent<Chess>();
+                    chess.transform.parent = check.transform;
+                    chess.Init(x, y);
+
+                    check.SetChess(chess, ChessSelect, ChessRemove);
+
+                    OnRoundEnd += check.ClearState;
+                    OnChessSelect += check.OnSomeChessSelected;
+                }
             }
         }
-    }
 
-    void ClearGame()
-    {
-        RecycleAllToPool();
-
-        mCurMaxMove = 0;
-        mEmptyCheck.Clear();
-        mAllMovableCheck.Clear();
-        mCurSelectFrom = null;
-        OnNextRound = null;
-    }
-
-    #region Round
-    void StartRound()
-    {
-        BlackFirstRound();
-    }
-
-    void BlackFirstRound()
-    {
-        Round = 1;
-        CurrentSide = true;
-        m_Title.text = $"Round {Round} {mCurrentSideName}";
-
-        var firstPos = mBoardSize - 1;
-        var secondPos = mBoardSize / 2;
-        var thirdPos = secondPos - 1;
-        SetCheckCanRemove(firstPos, firstPos);
-        SetCheckCanRemove(secondPos, secondPos);
-        SetCheckCanRemove(thirdPos, thirdPos);
-        SetCheckCanRemove(0, 0);
-
-        OnNextRound = WhiteFirstRound;
-    }
-
-    void WhiteFirstRound()
-    {
-        Round = 1;
-        CurrentSide = false;
-        m_Title.text = $"Round {Round} {mCurrentSideName}";
-
-        var emptyPos = mEmptyCheck[0].Pos;
-        var upPos = emptyPos + Vector2Int.up;
-        var downPos = emptyPos + Vector2Int.down;
-        var leftPos = emptyPos + Vector2Int.left;
-        var rightPos = emptyPos + Vector2Int.right;
-        SetCheckCanRemove(upPos);
-        SetCheckCanRemove(downPos);
-        SetCheckCanRemove(leftPos);
-        SetCheckCanRemove(rightPos);
-
-        OnNextRound = NextRound;
-    }
-
-    void NextRound()
-    {
-        CurrentSide = !CurrentSide;
-        Round += (CurrentSide) ? 1 : 0;
-        m_Title.text = $"Round {Round} {mCurrentSideName}";
-
-        if (!CheckMovablePath(CurrentSide))
+        void ClearGame()
         {
-            GameEnd();
-            return;
+            RecycleAllToPool();
+
+            mCurMaxMove = 0;
+            mEmptyCheck.Clear();
+            mAllMovableCheck.Clear();
+            mCurSelectFrom = null;
+            OnNextRound = null;
         }
 
-        OnNextRound = NextRound;
-    }
-
-    void RoundEnd()
-    {
-        OnRoundEnd?.Invoke();
-
-        mCurMaxMove = 0;
-        mAllMovableCheck.Clear();
-        mCurSelectFrom = null;
-    }
-
-    void GameEnd()
-    {
-        mIsGameEnd = true;
-
-        var winnerText = $"Winner is {mLastSideName}!";
-        m_Title.text = winnerText;
-
-        var notifyText = $"{Notify.kGameEnd}\n{winnerText}";
-        m_Notify.InitNotify(new NotifyData
+        #region Round
+        void StartRound()
         {
-            Content = notifyText,
-            ConfirmText = "OK",
-            ConfirmEvent = LeaveGame,
-            CancelText = "See Board",
-            CancelEvent = null,
-        });
-
-        m_Notify.Show();
-    }
-
-    #endregion Round
-
-    #region Path Check
-    bool CheckMovablePath(bool side)
-    {
-        foreach (var emptyCheck in mEmptyCheck)
-        {
-            emptyCheck.ClearState();
+            BlackFirstRound();
         }
 
-        IsMoveValidCheckTime = 0;
-        bool haveValidPath = false;
-        foreach (var emptyCheck in mEmptyCheck)
+        void BlackFirstRound()
         {
-            //Debug.Log($"Check emptyCheck {emptyCheck.Pos}");
-            haveValidPath |= TraceAllDirection(side, emptyCheck);
+            Round = 1;
+            CurrentSide = true;
+            m_Title.text = $"Round {Round} {mCurrentSideName}";
+
+            var firstPos = mBoardSize - 1;
+            var secondPos = mBoardSize / 2;
+            var thirdPos = secondPos - 1;
+            SetCheckCanRemove(firstPos, firstPos);
+            SetCheckCanRemove(secondPos, secondPos);
+            SetCheckCanRemove(thirdPos, thirdPos);
+            SetCheckCanRemove(0, 0);
+
+            OnNextRound = WhiteFirstRound;
         }
 
-        Debug.Log($"CurMaxMove {mCurMaxMove}, IsMoveValidCheckTime {IsMoveValidCheckTime}");
-        return haveValidPath;
-    }
-
-    bool TraceAllDirection(bool side, Check check)
-    {
-        //Debug.Log($"Check Same Side? {Check.Side == side}");
-        // 只能採在同隊的格子上
-        if (check.Side != side)
-            return false;
-
-        var canMoveTo = false;
-
-        // 對面沒有棋，繼續追
-        if (!check.XChecked)
+        void WhiteFirstRound()
         {
-            var leftDepth = 0;
-            var rightDepth = 0;
-            var leftMovePath = new LinkedList<Check>();
-            var rightMovePath = new LinkedList<Check>();
-            canMoveTo |= TraceMovablePath(side, check, Vector2Int.left, ref leftDepth, ref leftMovePath, out var moveFromLeft);
-            canMoveTo |= TraceMovablePath(side, check, Vector2Int.right, ref rightDepth, ref rightMovePath, out var moveFromRight);
+            Round = 1;
+            CurrentSide = false;
+            m_Title.text = $"Round {Round} {mCurrentSideName}";
 
-            leftMovePath.AddFirst(check);
-            rightMovePath.AddFirst(check);
+            var emptyPos = mEmptyCheck[0].Pos;
+            var upPos = emptyPos + Vector2Int.up;
+            var downPos = emptyPos + Vector2Int.down;
+            var leftPos = emptyPos + Vector2Int.left;
+            var rightPos = emptyPos + Vector2Int.right;
+            SetCheckCanRemove(upPos);
+            SetCheckCanRemove(downPos);
+            SetCheckCanRemove(leftPos);
+            SetCheckCanRemove(rightPos);
 
-            var xDepth = leftDepth + rightDepth + 1;
-            SetMovePathInfo(moveFromLeft, Vector2Int.left, rightMovePath, xDepth);  // 補上對面方向的 path
-            SetMovePathInfo(moveFromRight, Vector2Int.right, leftMovePath, xDepth); // 補上對面方向的 path
+            OnNextRound = NextRound;
         }
 
-        if (!check.YChecked)
+        void NextRound()
         {
-            var upDepth = 0;
-            var downDepth = 0;
-            var upMovePath = new LinkedList<Check>();
-            var downMovePath = new LinkedList<Check>();
-            canMoveTo |= TraceMovablePath(side, check, Vector2Int.up, ref upDepth, ref upMovePath, out var moveFromUp);
-            canMoveTo |= TraceMovablePath(side, check, Vector2Int.down, ref downDepth, ref downMovePath, out var moveFromDown);
+            CurrentSide = !CurrentSide;
+            Round += (CurrentSide) ? 1 : 0;
+            m_Title.text = $"Round {Round} {mCurrentSideName}";
 
-            upMovePath.AddFirst(check);
-            downMovePath.AddFirst(check);
-
-            var yDepth = upDepth + downDepth + 1;
-            SetMovePathInfo(moveFromUp, Vector2Int.up, downMovePath, yDepth);       // 補上對面方向的 path
-            SetMovePathInfo(moveFromDown, Vector2Int.down, upMovePath, yDepth);     // 補上對面方向的 path
-        }
-
-        if (canMoveTo)
-        {
-            //Debug.Log($"Highlight To {Check.YPos}, {Check.XPos}");
-            SetCheckCanMoveTo(check, CheckSelect);
-        }
-
-        check.SetAllChecked(true);
-
-        return canMoveTo;
-    }
-
-    int IsMoveValidCheckTime = 0;
-
-    bool TraceMovablePath(bool side, Check check, Vector2Int direction, ref int depth, ref LinkedList<Check> movePath, out Check moveFrom)
-    {
-        IsMoveValidCheckTime++;
-        //Debug.Log($"Check {Check.Pos}, {direction}");
-        moveFrom = null;
-
-        var isMoveDirectionValid = IsMoveDirectionValid(check.Pos, direction, out var nextCheck);
-        //Debug.Log($"Check IsMoveValid? {isMoveDirectionValid}");
-        if (!isMoveDirectionValid)
-            return false;
-
-        var nextCheckHaveChess = nextCheck.CurrentChess != null;
-        //Debug.Log($"Check nextCheckHaveChess {nextCheckHaveChess}");
-        if (nextCheckHaveChess)
-        {
-            // 對面有棋了，此條路線成立
-            //Debug.Log($"Highlight From {nextCheck.Pos}");
-            SetCheckCanMoveFrom(nextCheck);
-            moveFrom = nextCheck;
-            return true;
-        }
-        else
-        {
-            depth++;
-            // 對面沒有棋，繼續追
-            if (TraceMovablePath(side, nextCheck, direction, ref depth, ref movePath, out moveFrom))
+            if (!CheckMovablePath(CurrentSide))
             {
-                movePath.AddFirst(check);    // 統計可移動的空格，方便之後 Apply 給可移動的旗子 □ → □ → □ → ●
-                if (moveFrom != null)
-                    moveFrom.SetDirPath(direction, check);
+                GameEnd();
+                return;
+            }
 
+            OnNextRound = NextRound;
+        }
+
+        void RoundEnd()
+        {
+            OnRoundEnd?.Invoke();
+
+            mCurMaxMove = 0;
+            mAllMovableCheck.Clear();
+            mCurSelectFrom = null;
+        }
+
+        void GameEnd()
+        {
+            mIsGameEnd = true;
+
+            var winnerText = $"Winner is {mLastSideName}!";
+            m_Title.text = winnerText;
+
+            var notifyText = $"{Notify.kGameEnd}\n{winnerText}";
+            m_Notify.InitNotify(new NotifyData
+            {
+                Content = notifyText,
+                ConfirmText = "OK",
+                ConfirmEvent = LeaveGame,
+                CancelText = "See Board",
+                CancelEvent = null,
+            });
+
+            m_Notify.Show();
+        }
+
+        #endregion Round
+
+        #region Path Check
+        bool CheckMovablePath(bool side)
+        {
+            foreach (var emptyCheck in mEmptyCheck)
+            {
+                emptyCheck.ClearState();
+            }
+
+            IsMoveValidCheckTime = 0;
+            bool haveValidPath = false;
+            foreach (var emptyCheck in mEmptyCheck)
+            {
+                //Debug.Log($"Check emptyCheck {emptyCheck.Pos}");
+                haveValidPath |= TraceAllDirection(side, emptyCheck);
+            }
+
+            Debug.Log($"CurMaxMove {mCurMaxMove}, IsMoveValidCheckTime {IsMoveValidCheckTime}");
+            return haveValidPath;
+        }
+
+        bool TraceAllDirection(bool side, Check check)
+        {
+            //Debug.Log($"Check Same Side? {Check.Side == side}");
+            // 只能採在同隊的格子上
+            if (check.Side != side)
+                return false;
+
+            var canMoveTo = false;
+
+            // 對面沒有棋，繼續追
+            if (!check.XChecked)
+            {
+                var leftDepth = 0;
+                var rightDepth = 0;
+                var leftMovePath = new LinkedList<Check>();
+                var rightMovePath = new LinkedList<Check>();
+                canMoveTo |= TraceMovablePath(side, check, Vector2Int.left, ref leftDepth, ref leftMovePath, out var moveFromLeft);
+                canMoveTo |= TraceMovablePath(side, check, Vector2Int.right, ref rightDepth, ref rightMovePath, out var moveFromRight);
+
+                leftMovePath.AddFirst(check);
+                rightMovePath.AddFirst(check);
+
+                var xDepth = leftDepth + rightDepth + 1;
+                SetMovePathInfo(moveFromLeft, Vector2Int.left, rightMovePath, xDepth);  // 補上對面方向的 path
+                SetMovePathInfo(moveFromRight, Vector2Int.right, leftMovePath, xDepth); // 補上對面方向的 path
+            }
+
+            if (!check.YChecked)
+            {
+                var upDepth = 0;
+                var downDepth = 0;
+                var upMovePath = new LinkedList<Check>();
+                var downMovePath = new LinkedList<Check>();
+                canMoveTo |= TraceMovablePath(side, check, Vector2Int.up, ref upDepth, ref upMovePath, out var moveFromUp);
+                canMoveTo |= TraceMovablePath(side, check, Vector2Int.down, ref downDepth, ref downMovePath, out var moveFromDown);
+
+                upMovePath.AddFirst(check);
+                downMovePath.AddFirst(check);
+
+                var yDepth = upDepth + downDepth + 1;
+                SetMovePathInfo(moveFromUp, Vector2Int.up, downMovePath, yDepth);       // 補上對面方向的 path
+                SetMovePathInfo(moveFromDown, Vector2Int.down, upMovePath, yDepth);     // 補上對面方向的 path
+            }
+
+            if (canMoveTo)
+            {
                 //Debug.Log($"Highlight To {Check.YPos}, {Check.XPos}");
                 SetCheckCanMoveTo(check, CheckSelect);
-                check.SetDirChecked(direction);
+            }
+
+            check.SetAllChecked(true);
+
+            return canMoveTo;
+        }
+
+        int IsMoveValidCheckTime = 0;
+
+        bool TraceMovablePath(bool side, Check check, Vector2Int direction, ref int depth, ref LinkedList<Check> movePath, out Check moveFrom)
+        {
+            IsMoveValidCheckTime++;
+            //Debug.Log($"Check {Check.Pos}, {direction}");
+            moveFrom = null;
+
+            var isMoveDirectionValid = IsMoveDirectionValid(check.Pos, direction, out var nextCheck);
+            //Debug.Log($"Check IsMoveValid? {isMoveDirectionValid}");
+            if (!isMoveDirectionValid)
+                return false;
+
+            var nextCheckHaveChess = nextCheck.CurrentChess != null;
+            //Debug.Log($"Check nextCheckHaveChess {nextCheckHaveChess}");
+            if (nextCheckHaveChess)
+            {
+                // 對面有棋了，此條路線成立
+                //Debug.Log($"Highlight From {nextCheck.Pos}");
+                SetCheckCanMoveFrom(nextCheck);
+                moveFrom = nextCheck;
                 return true;
             }
             else
             {
-                movePath.AddFirst(check);    // 統計可移動的空格，方便之後 Apply 給可移動的旗子 □ → □ → □ → ●
+                depth++;
+                // 對面沒有棋，繼續追
+                if (TraceMovablePath(side, nextCheck, direction, ref depth, ref movePath, out moveFrom))
+                {
+                    movePath.AddFirst(check);    // 統計可移動的空格，方便之後 Apply 給可移動的旗子 □ → □ → □ → ●
+                    if (moveFrom != null)
+                        moveFrom.SetDirPath(direction, check);
+
+                    //Debug.Log($"Highlight To {Check.YPos}, {Check.XPos}");
+                    SetCheckCanMoveTo(check, CheckSelect);
+                    check.SetDirChecked(direction);
+                    return true;
+                }
+                else
+                {
+                    movePath.AddFirst(check);    // 統計可移動的空格，方便之後 Apply 給可移動的旗子 □ → □ → □ → ●
+                }
             }
-        }
 
-        return false;
-    }
-
-    /// <summary>
-    /// 前方有棋子可以跳，且目標格子在棋盤範圍內
-    /// </summary>
-    bool IsMoveDirectionValid(Vector2Int pos, Vector2Int direction, out Check nextCheck)
-    {
-        nextCheck = null;
-        var nextPos = pos + direction * 2;
-        var isNextPosValid = IsPosValid(nextPos.x, nextPos.y);
-        if (!isNextPosValid)
             return false;
-
-        //Debug.Log($"IsMoveValid crossPos {crossPos}, nextPos {nextPos}");
-        nextCheck = mCheckArray[nextPos.x, nextPos.y];
-
-        // 是否有可以跨過去的棋
-        var crossPos = pos + direction;
-        return mCheckArray[crossPos.x, crossPos.y].CurrentChess != null;
-    }
-
-    /// <summary>
-    /// 位置是否在棋盤內
-    /// </summary>
-    bool IsPosValid(int x, int y)
-    {
-        return x >= 0 && x < mBoardSize
-            && y >= 0 && y < mBoardSize;
-    }
-
-    void SetMovePathInfo(Check check, Vector2Int direction, LinkedList<Check> movePath, int depth)
-    {
-        if (check == null)
-            return;
-
-        check.SetChessMaxMove(depth);
-        check.SetDirPath(direction, movePath);
-        UpdateMaxMove(depth);
-
-        if (!mAllMovableCheck.Contains(check))
-            mAllMovableCheck.Add(check);
-    }
-
-    void UpdateMaxMove(int newDepth)
-    {
-        if (newDepth > mCurMaxMove)
-            mCurMaxMove = newDepth;
-    }
-    #endregion Path Check
-
-    #region Remove Event
-    void SetCheckCanRemove(Vector2Int pos)
-    {
-        SetCheckCanRemove(pos.x, pos.y);
-    }
-
-    void SetCheckCanRemove(int x, int y)
-    {
-        if (!IsPosValid(x, y))
-            return;
-
-        var check = mCheckArray[x, y];
-        SetCheckCanRemove(check);
-    }
-
-    void SetCheckCanRemove(Check check)
-    {
-        if (check.CanRemove)
-            return;
-
-        check.SetCanRemove(true);
-    }
-
-    void ChessRemove(Chess chess)
-    {
-        Debug.Log($"ChessRemove {chess.Pos}");
-        OnChessSelect?.Invoke(chess.Pos);
-
-        if (mCurSelectFrom == null
-            || mCurSelectFrom.Pos != chess.Pos)
-        {
-            var check = mCheckArray[chess.XPos, chess.YPos];
-            mCurSelectFrom = check;
-            return;
         }
 
-        // Remove first chess
-        RemoveChess(chess.Pos);
-
-        RoundEnd();
-        OnNextRound?.Invoke();
-    }
-    #endregion
-
-    #region Move Event
-    void SetCheckCanMoveFrom(Check check)
-    {
-        if (check.CanMoveFrom)
-            return;
-
-        check.SetCanMoveFrom(true);
-    }
-
-    void SetCheckCanMoveTo(Check check, Action<Check> selectEvent)
-    {
-        if (check.CanMoveTo)
-            return;
-
-        var chess = check.CurrentChess;
-        check.SetCanMoveTo(true);
-        check.RegisterMoveToEvent(selectEvent);
-        OnRoundEnd += check.ClearState;
-    }
-
-    /// <summary>
-    /// 選擇要操作的棋子
-    /// </summary>
-    void ChessSelect(Chess chess)
-    {
-        OnChessSelect?.Invoke(chess.Pos);
-
-        var check = mCheckArray[chess.XPos, chess.YPos];
-        mCurSelectFrom = check;
-    }
-
-    /// <summary>
-    /// 選擇要跳往的棋格
-    /// </summary>
-    void CheckSelect(Check check)
-    {
-        TryMoveChess(mCurSelectFrom, check);
-    }
-    #endregion
-
-    #region Move Chess
-    void TryMoveChess(Check fromCheck, Check toCheck)
-    {
-        //Debug.Log($"TryMoveChess {fromCheck.Pos}, {toCheck.Pos}");
-        if (fromCheck == null || toCheck == null)
-            return;
-
-        // 沒有可以移動的棋，或者對面有棋導致無法移動過去
-        if (fromCheck.CurrentChess == null || toCheck.CurrentChess != null)
-            return;
-
-        if (!IsMoveValid(fromCheck, toCheck, out var moveTimes))
-            return;
-
-        void MoveAndEndRound()
+        /// <summary>
+        /// 前方有棋子可以跳，且目標格子在棋盤範圍內
+        /// </summary>
+        bool IsMoveDirectionValid(Vector2Int pos, Vector2Int direction, out Check nextCheck)
         {
-            MoveChess(fromCheck, toCheck);
+            nextCheck = null;
+            var nextPos = pos + direction * 2;
+            var isNextPosValid = IsPosValid(nextPos.x, nextPos.y);
+            if (!isNextPosValid)
+                return false;
+
+            //Debug.Log($"IsMoveValid crossPos {crossPos}, nextPos {nextPos}");
+            nextCheck = mCheckArray[nextPos.x, nextPos.y];
+
+            // 是否有可以跨過去的棋
+            var crossPos = pos + direction;
+            return mCheckArray[crossPos.x, crossPos.y].CurrentChess != null;
+        }
+
+        /// <summary>
+        /// 位置是否在棋盤內
+        /// </summary>
+        bool IsPosValid(int x, int y)
+        {
+            return x >= 0 && x < mBoardSize
+                && y >= 0 && y < mBoardSize;
+        }
+
+        void SetMovePathInfo(Check check, Vector2Int direction, LinkedList<Check> movePath, int depth)
+        {
+            if (check == null)
+                return;
+
+            check.SetChessMaxMove(depth);
+            check.SetDirPath(direction, movePath);
+            UpdateMaxMove(depth);
+
+            if (!mAllMovableCheck.Contains(check))
+                mAllMovableCheck.Add(check);
+        }
+
+        void UpdateMaxMove(int newDepth)
+        {
+            if (newDepth > mCurMaxMove)
+                mCurMaxMove = newDepth;
+        }
+        #endregion Path Check
+
+        #region Remove Event
+        void SetCheckCanRemove(Vector2Int pos)
+        {
+            SetCheckCanRemove(pos.x, pos.y);
+        }
+
+        void SetCheckCanRemove(int x, int y)
+        {
+            if (!IsPosValid(x, y))
+                return;
+
+            var check = mCheckArray[x, y];
+            SetCheckCanRemove(check);
+        }
+
+        void SetCheckCanRemove(Check check)
+        {
+            if (check.CanRemove)
+                return;
+
+            check.SetCanRemove(true);
+        }
+
+        void ChessRemove(Chess chess)
+        {
+            Debug.Log($"ChessRemove {chess.Pos}");
+            OnChessSelect?.Invoke(chess.Pos);
+
+            if (mCurSelectFrom == null
+                || mCurSelectFrom.Pos != chess.Pos)
+            {
+                var check = mCheckArray[chess.XPos, chess.YPos];
+                mCurSelectFrom = check;
+                return;
+            }
+
+            // Remove first chess
+            RemoveChess(chess.Pos);
+
             RoundEnd();
             OnNextRound?.Invoke();
         }
+        #endregion
 
-        // 可以連跳
-        if (ShowHint && mCurMaxMove > moveTimes)
+        #region Move Event
+        void SetCheckCanMoveFrom(Check check)
         {
-            m_Notify.InitNotify(new NotifyData
+            if (check.CanMoveFrom)
+                return;
+
+            check.SetCanMoveFrom(true);
+        }
+
+        void SetCheckCanMoveTo(Check check, Action<Check> selectEvent)
+        {
+            if (check.CanMoveTo)
+                return;
+
+            var chess = check.CurrentChess;
+            check.SetCanMoveTo(true);
+            check.RegisterMoveToEvent(selectEvent);
+            OnRoundEnd += check.ClearState;
+        }
+
+        /// <summary>
+        /// 選擇要操作的棋子
+        /// </summary>
+        void ChessSelect(Chess chess)
+        {
+            OnChessSelect?.Invoke(chess.Pos);
+
+            var check = mCheckArray[chess.XPos, chess.YPos];
+            mCurSelectFrom = check;
+        }
+
+        /// <summary>
+        /// 選擇要跳往的棋格
+        /// </summary>
+        void CheckSelect(Check check)
+        {
+            TryMoveChess(mCurSelectFrom, check);
+        }
+        #endregion
+
+        #region Move Chess
+        void TryMoveChess(Check fromCheck, Check toCheck)
+        {
+            //Debug.Log($"TryMoveChess {fromCheck.Pos}, {toCheck.Pos}");
+            if (fromCheck == null || toCheck == null)
+                return;
+
+            // 沒有可以移動的棋，或者對面有棋導致無法移動過去
+            if (fromCheck.CurrentChess == null || toCheck.CurrentChess != null)
+                return;
+
+            if (!IsMoveValid(fromCheck, toCheck, out var moveTimes))
+                return;
+
+            void MoveAndEndRound()
             {
-                Content = Notify.kBetterChoice,
-                ConfirmText = "I'm sure.",
-                ConfirmEvent = MoveAndEndRound,
-                CancelText = "Wait!",
-                CancelEvent = null,
-            });
-            m_Notify.Show();
+                MoveChess(fromCheck, toCheck);
+                RoundEnd();
+                OnNextRound?.Invoke();
+            }
+
+            // 可以連跳
+            if (ShowHint && mCurMaxMove > moveTimes)
+            {
+                m_Notify.InitNotify(new NotifyData
+                {
+                    Content = Notify.kBetterChoice,
+                    ConfirmText = "I'm sure.",
+                    ConfirmEvent = MoveAndEndRound,
+                    CancelText = "Wait!",
+                    CancelEvent = null,
+                });
+                m_Notify.Show();
+                return;
+            }
+
+            MoveAndEndRound();
             return;
         }
 
-        MoveAndEndRound();
-        return;
-    }
-
-    bool IsMoveValid(Check fromCheck, Check toCheck, out int moveTimes)
-    {
-        moveTimes = 0;
-
-        //Debug.Log($"IsMoveValid CanMoveFrom {fromCheck.CanMoveFrom}, CanMoveTo {toCheck.CanMoveTo}");
-        if (!fromCheck.CanMoveFrom)
-            return false;
-
-        if (!toCheck.CanMoveTo)
-            return false;
-
-        var direction = toCheck.Pos - fromCheck.Pos;
-        var distance = (int)direction.magnitude;
-        var normalizedDir = direction / distance;
-        //Debug.Log($"IsMoveValid IsMoveDirectionValid? dir {normalizedDir}, distance {distance}");
-        if (!IsMoveDirectionValid(normalizedDir))
-            return false;
-
-        if (!IsMoveDistanceValid(distance))
-            return false;
-
-        if (!IsMovePathValid(fromCheck.Pos, normalizedDir, distance))
-            return false;
-
-        moveTimes = distance / 2;
-        return true;
-    }
-
-    bool IsMoveDirectionValid(Vector2Int direction)
-    {
-        return direction == Vector2Int.up
-            || direction == Vector2Int.down
-            || direction == Vector2Int.left
-            || direction == Vector2Int.right;
-    }
-
-    bool IsMoveDistanceValid(int distance)
-    {
-        return distance > 0 && distance % 2 == 0;
-    }
-
-    bool IsMovePathValid(Vector2Int from, Vector2Int direction, int distance)
-    {
-        //Debug.Log($"IsPathValid from {from}, direction {direction}, distance {distance}");
-        // 順利走完了，回家ㄅ
-        if (distance <= 0)
-            return true;
-
-        var crossPos = from + direction;
-        var nextPos = from + direction * 2;
-        //Debug.Log($"IsPathValid crossPos {crossPos}, nextPos {nextPos}");
-
-        var crossCheck = mCheckArray[crossPos.x, crossPos.y];
-        // 沒有棋可以吃
-        if (crossCheck.CurrentChess == null)
-            return false;
-
-        var nextCheck = mCheckArray[nextPos.x, nextPos.y];
-        // 沒有空位可以跳
-        if (nextCheck.CurrentChess != null)
-            return false;
-
-        distance -= 2;
-        return IsMovePathValid(nextPos, direction, distance);
-    }
-
-    void MoveChess(Check fromCheck, Check toCheck)
-    {
-        var direction = toCheck.Pos - fromCheck.Pos;
-        var distance = (int)direction.magnitude;
-        var normalizedDir = direction / distance;
-
-        while (distance > 0)
+        bool IsMoveValid(Check fromCheck, Check toCheck, out int moveTimes)
         {
-            // Remove Cross Chess
-            var crossPos = fromCheck.Pos + normalizedDir * (distance - 1);
-            RemoveChess(crossPos);
-            distance -= 2;
+            moveTimes = 0;
+
+            //Debug.Log($"IsMoveValid CanMoveFrom {fromCheck.CanMoveFrom}, CanMoveTo {toCheck.CanMoveTo}");
+            if (!fromCheck.CanMoveFrom)
+                return false;
+
+            if (!toCheck.CanMoveTo)
+                return false;
+
+            var direction = toCheck.Pos - fromCheck.Pos;
+            var distance = (int)direction.magnitude;
+            var normalizedDir = direction / distance;
+            //Debug.Log($"IsMoveValid IsMoveDirectionValid? dir {normalizedDir}, distance {distance}");
+            if (!IsMoveDirectionValid(normalizedDir))
+                return false;
+
+            if (!IsMoveDistanceValid(distance))
+                return false;
+
+            if (!IsMovePathValid(fromCheck.Pos, normalizedDir, distance))
+                return false;
+
+            moveTimes = distance / 2;
+            return true;
         }
 
-        // Move My Chess
-        var moveChess = fromCheck.RemoveChess();
-        toCheck.SetChess(moveChess, ChessSelect, ChessRemove);
-        mEmptyCheck.Remove(toCheck);
-        mEmptyCheck.Add(fromCheck);
-    }
+        bool IsMoveDirectionValid(Vector2Int direction)
+        {
+            return direction == Vector2Int.up
+                || direction == Vector2Int.down
+                || direction == Vector2Int.left
+                || direction == Vector2Int.right;
+        }
 
-    void RemoveChess(Vector2Int pos)
-    {
-        if (pos.x < 0 || pos.y < 0)
-            return;
+        bool IsMoveDistanceValid(int distance)
+        {
+            return distance > 0 && distance % 2 == 0;
+        }
 
-        var check = mCheckArray[pos.x, pos.y];
-        var chess = check.RemoveChess();
-        mEmptyCheck.Add(check);
-        RecycleChess(chess);
-        Debug.Log($"Empty {check.XPos}, {check.YPos}");
+        bool IsMovePathValid(Vector2Int from, Vector2Int direction, int distance)
+        {
+            //Debug.Log($"IsPathValid from {from}, direction {direction}, distance {distance}");
+            // 順利走完了，回家ㄅ
+            if (distance <= 0)
+                return true;
+
+            var crossPos = from + direction;
+            var nextPos = from + direction * 2;
+            //Debug.Log($"IsPathValid crossPos {crossPos}, nextPos {nextPos}");
+
+            var crossCheck = mCheckArray[crossPos.x, crossPos.y];
+            // 沒有棋可以吃
+            if (crossCheck.CurrentChess == null)
+                return false;
+
+            var nextCheck = mCheckArray[nextPos.x, nextPos.y];
+            // 沒有空位可以跳
+            if (nextCheck.CurrentChess != null)
+                return false;
+
+            distance -= 2;
+            return IsMovePathValid(nextPos, direction, distance);
+        }
+
+        void MoveChess(Check fromCheck, Check toCheck)
+        {
+            var direction = toCheck.Pos - fromCheck.Pos;
+            var distance = (int)direction.magnitude;
+            var normalizedDir = direction / distance;
+
+            while (distance > 0)
+            {
+                // Remove Cross Chess
+                var crossPos = fromCheck.Pos + normalizedDir * (distance - 1);
+                RemoveChess(crossPos);
+                distance -= 2;
+            }
+
+            // Move My Chess
+            var moveChess = fromCheck.RemoveChess();
+            toCheck.SetChess(moveChess, ChessSelect, ChessRemove);
+            mEmptyCheck.Remove(toCheck);
+            mEmptyCheck.Add(fromCheck);
+        }
+
+        void RemoveChess(Vector2Int pos)
+        {
+            if (pos.x < 0 || pos.y < 0)
+                return;
+
+            var check = mCheckArray[pos.x, pos.y];
+            var chess = check.RemoveChess();
+            mEmptyCheck.Add(check);
+            RecycleChess(chess);
+            Debug.Log($"Empty {check.XPos}, {check.YPos}");
+        }
+        #endregion Select Event
     }
-    #endregion Select Event
 }
-

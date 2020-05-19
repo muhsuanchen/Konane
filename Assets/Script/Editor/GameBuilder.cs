@@ -242,9 +242,11 @@ public class GameBuilder
         using (var sw = new StreamWriter($"{Directory.GetCurrentDirectory()}/{kRevisionPath}", false, new UTF8Encoding(true)))
         {
             sw.WriteLine(
-                "public sealed class Version" +
-                "{{ " +
-                    "public const string VERSION = \"{0}\";" +
+                "namespace TrainingProject {{ " +
+                    "public sealed class Version" +
+                    "{{ " +
+                        "public const string VERSION = \"{0}\";" +
+                    " }}" +
                 " }}", svnRevision);
             sw.Close();
         }
