@@ -263,7 +263,7 @@ namespace TrainingProject
         {
             Round = 1;
             CurrentSide = true;
-            m_Title.text = $"Round {Round} {mCurrentSideName}";
+            UpdateTitle();
 
             var firstPos = mBoardSize - 1;
             var secondPos = mBoardSize / 2;
@@ -280,7 +280,7 @@ namespace TrainingProject
         {
             Round = 1;
             CurrentSide = false;
-            m_Title.text = $"Round {Round} {mCurrentSideName}";
+            UpdateTitle();
 
             var emptyPos = mEmptyCheck[0].Pos;
             var upPos = emptyPos + Vector2Int.up;
@@ -299,7 +299,7 @@ namespace TrainingProject
         {
             CurrentSide = !CurrentSide;
             Round += (CurrentSide) ? 1 : 0;
-            m_Title.text = $"Round {Round} {mCurrentSideName}";
+            UpdateTitle();
 
             if (!CheckMovablePath(CurrentSide))
             {
@@ -308,6 +308,11 @@ namespace TrainingProject
             }
 
             OnNextRound = NextRound;
+        }
+
+        void UpdateTitle()
+        {
+            m_Title.text = $"--- Round {Round} ---\n{mCurrentSideName}";
         }
 
         void RoundEnd()
