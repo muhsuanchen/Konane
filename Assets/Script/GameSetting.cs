@@ -1,8 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace TrainingProject
+﻿namespace TrainingProject
 {
     public enum Scenes
     {
@@ -12,17 +8,8 @@ namespace TrainingProject
 
     public class GameSetting : MonoSingleton<GameSetting>
     {
-        public int BoardSize { get; private set; } = 6;
         public bool ShowHint { get; private set; } = false;
-        public bool RestartLastGame { get; private set; } = false;
-
-        public void SetBoardSize(int size)
-        {
-            if (size != 6 && size != 8)
-                return;
-
-            BoardSize = size;
-        }
+        public bool ResumeLastGame { get; private set; } = false;
 
         public void SwitchShowHint()
         {
@@ -36,7 +23,7 @@ namespace TrainingProject
 
         public void SetStartWithRecord(bool active)
         {
-            RestartLastGame = active;
+            ResumeLastGame = active;
         }
     }
 }

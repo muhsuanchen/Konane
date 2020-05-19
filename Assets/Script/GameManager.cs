@@ -70,8 +70,8 @@ namespace TrainingProject
 
         private void Start()
         {
-            if (GameSetting.Instance.RestartLastGame)
-                StartGameWithRecord();
+            if (GameSetting.Instance.ResumeLastGame)
+                ResumeLastGame();
             else
                 ShowBoardSizeSelectorAndStart();
         }
@@ -150,7 +150,7 @@ namespace TrainingProject
             OnNextRound = null;
         }
 
-        void StartGameWithRecord()
+        void ResumeLastGame()
         {
             mIsGameEnd = false;
 
@@ -198,8 +198,7 @@ namespace TrainingProject
 
             ClearRecord();
 
-            GameSetting.Instance.SetBoardSize(size);
-            mBoardSize = GameSetting.Instance.BoardSize;
+            mBoardSize = size;
             mCheckArray = new Check[mBoardSize, mBoardSize];
 
             InitBoard();
