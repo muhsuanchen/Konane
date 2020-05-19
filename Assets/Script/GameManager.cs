@@ -247,6 +247,7 @@ namespace TrainingProject
 
         void UpdateBtnColor()
         {
+            Debug.Log($"[Update Btn Color] GameSetting.Instance.ShowHint");
             m_ShowHintImage.color = (GameSetting.Instance.ShowHint)
                                     ? mSelectBtnColor
                                     : mNormalBtnColor;

@@ -13,7 +13,7 @@
 
         public void SwitchShowHint()
         {
-            ShowHint = !ShowHint;
+            SetShowHint(!ShowHint);
         }
 
         public void SetShowHint(bool show)
