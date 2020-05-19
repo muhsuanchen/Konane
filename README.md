@@ -1,6 +1,7 @@
 # Konane
 Hawaiian Checker  
-Unity Project Version: 2019.3.3f1
+ProjectVersion: Unity 2019.3.3f1  
+初始場景: Initialization.Scene  
 
 ## 程式介面
 ### Menu
