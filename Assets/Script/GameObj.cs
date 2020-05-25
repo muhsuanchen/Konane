@@ -5,7 +5,7 @@ namespace TrainingProject
     public class GameObj : MonoBehaviour
     {
         [SerializeField]
-        GameSide mGameSide;  // true = (xy相加)偶數格, false = (xy相加)奇數格
+        GameSide mGameSide;
 
         public bool Side => mGameSide == GameSide.BLACK;
         public int XPos { get; private set; }
@@ -17,6 +17,10 @@ namespace TrainingProject
         public virtual void Init(int x, int y)
         {
             SetPos(x, y);
+
+            mGameSide = GameManager.GetGameSideFromXY(x, y);
+            InitColorBySide();
+
             gameObject.SetActive(true);
         }
 
@@ -25,6 +29,10 @@ namespace TrainingProject
             XPos = x;
             YPos = y;
             mPos = new Vector2Int(XPos, YPos);
+        }
+
+        protected virtual void InitColorBySide()
+        {
         }
 
         public virtual void Recycle()

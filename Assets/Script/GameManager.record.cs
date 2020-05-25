@@ -59,7 +59,7 @@
                     // true = (xy相加)偶數格, false = (xy相加)奇數格
                     var side = GetSideFromXY(x, y);
 
-                    var checkObj = GetCheck(side);
+                    var checkObj = GetCheck();
                     var check = checkObj.GetComponent<Check>();
                     check.transform.parent = m_BoardRoot;
                     check.Init(x, y);
@@ -67,7 +67,7 @@
 
                     if (checkState.haveChess)
                     {
-                        var chessObj = GetChess(side);
+                        var chessObj = GetChess();
                         var chess = chessObj.GetComponent<Chess>();
                         chess.transform.parent = check.transform;
                         chess.Init(x, y);
@@ -92,9 +92,15 @@
             return x * size + y;
         }
 
-        bool GetSideFromXY(int x, int y)
+        public static bool GetSideFromXY(int x, int y)
         {
+            // true = (xy相加)偶數格, false = (xy相加)奇數格
             return (x + y) % 2 == 0;
+        }
+
+        public static GameSide GetGameSideFromXY(int x, int y)
+        {
+            return GetSideFromXY(x, y) ? GameSide.BLACK : GameSide.WHITE;
         }
     }
 }

@@ -17,6 +17,9 @@ namespace TrainingProject
         RectTransform mRectTrans;
         Action<Check> OnMoveToEvent;
 
+        Color kBlackSideColor = new Color(188f / 255f, 133f / 255f, 100f / 255f);
+        Color kWhiteSideColor = new Color(87f / 255f, 38f / 255f, 32f / 255f);
+
         public bool HaveChess => CurrentChess != null;
         public Chess CurrentChess { get; private set; }
         public bool CanRemove => (CurrentChess == null) ? false : CurrentChess.Removable;
@@ -41,6 +44,11 @@ namespace TrainingProject
 
             ClearState();
             RemoveChess();
+        }
+
+        protected override void InitColorBySide()
+        {
+            m_CheckBG.color = (Side) ? kBlackSideColor : kWhiteSideColor;
         }
 
         public override void Recycle()

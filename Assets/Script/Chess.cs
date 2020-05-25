@@ -43,6 +43,11 @@ namespace TrainingProject
             ResetPos();
         }
 
+        protected override void InitColorBySide()
+        {
+            m_Chess.color = (Side) ? Color.black : Color.white;
+        }
+
         public void UpdateHintVisible()
         {
             m_MaxMoveText.enabled = GameSetting.Instance.ShowHint;

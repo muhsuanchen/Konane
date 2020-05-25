@@ -6,59 +6,42 @@ namespace TrainingProject
     public partial class GameManager
     {
         [SerializeField]
-        Check m_BlackCheckSample;
+        Check m_CheckSample;
         [SerializeField]
-        Transform m_BlackCheckPool;
+        Transform m_CheckPool;
         [SerializeField]
-        Chess m_BlackChessSample;
+        Chess m_ChessSample;
         [SerializeField]
-        Transform m_BlackChessPool;
-        [SerializeField]
-        Check m_WhiteCheckSample;
-        [SerializeField]
-        Transform m_WhiteCheckPool;
-        [SerializeField]
-        Chess m_WhiteChessSample;
-        [SerializeField]
-        Transform m_WhiteChessPool;
+        Transform m_ChessPool;
 
-        PoolBase<Check> mBlackCheckPool;
-        PoolBase<Chess> mBlackChessPool;
-        PoolBase<Check> mWhiteCheckPool;
-        PoolBase<Chess> mWhiteChessPool;
+        PoolBase<Check> mCheckPool;
+        PoolBase<Chess> mChessPool;
 
         void InitPool()
         {
-            mBlackCheckPool = new PoolBase<Check>(m_BlackCheckSample, m_BlackCheckPool);
-            mBlackChessPool = new PoolBase<Chess>(m_BlackChessSample, m_BlackChessPool);
-            mWhiteCheckPool = new PoolBase<Check>(m_WhiteCheckSample, m_WhiteCheckPool);
-            mWhiteChessPool = new PoolBase<Chess>(m_WhiteChessSample, m_WhiteChessPool);
+            mCheckPool = new PoolBase<Check>(m_CheckSample, m_CheckPool);
+            mChessPool = new PoolBase<Chess>(m_ChessSample, m_ChessPool);
         }
 
         void RecycleAllToPool()
         {
-            mBlackCheckPool.RecycleAll();
-            mBlackChessPool.RecycleAll();
-            mWhiteCheckPool.RecycleAll();
-            mWhiteChessPool.RecycleAll();
+            mCheckPool.RecycleAll();
+            mChessPool.RecycleAll();
         }
 
         void RecycleChess(Chess chess)
         {
-            if (chess.Side)
-                mBlackChessPool.Recycle(chess);
-            else
-                mWhiteChessPool.Recycle(chess);
+            mChessPool.Recycle(chess);
         }
 
-        Chess GetChess(bool side)
+        Chess GetChess()
         {
-            return (side) ? mBlackChessPool.GetObj() : mWhiteChessPool.GetObj();
+            return mChessPool.GetObj();
         }
 
-        Check GetCheck(bool side)
+        Check GetCheck()
         {
-            return (side) ? mBlackCheckPool.GetObj() : mWhiteCheckPool.GetObj();
+            return mCheckPool.GetObj();
         }
 
         class PoolBase<T> where T : GameObj

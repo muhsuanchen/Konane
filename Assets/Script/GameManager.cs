@@ -82,14 +82,8 @@ namespace TrainingProject
             GameSetting.Instance.SwitchShowHint();
             UpdateBtnColor();
 
-            var allBlackUsing = mBlackChessPool.GetAllUsing();
-            foreach (var chess in allBlackUsing)
-            {
-                chess.UpdateHintVisible();
-            }
-
-            var allWhiteUsing = mWhiteChessPool.GetAllUsing();
-            foreach (var chess in allWhiteUsing)
+            var allUsingChess = mChessPool.GetAllUsing();
+            foreach (var chess in allUsingChess)
             {
                 chess.UpdateHintVisible();
             }
@@ -220,13 +214,13 @@ namespace TrainingProject
                     // true = (xy相加)偶數格, false = (xy相加)奇數格
                     var side = GetSideFromXY(x, y);
 
-                    var checkObj = GetCheck(side);
+                    var checkObj = GetCheck();
                     var check = checkObj.GetComponent<Check>();
                     check.transform.parent = m_BoardRoot;
                     check.Init(x, y);
                     mCheckArray[x, y] = check;
 
-                    var chessObj = GetChess(side);
+                    var chessObj = GetChess();
                     var chess = chessObj.GetComponent<Chess>();
                     chess.transform.parent = check.transform;
                     chess.Init(x, y);
