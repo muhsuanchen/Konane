@@ -1,1 +1,1 @@
-﻿namespace TrainingProject { public sealed class Version{ public const string VERSION = "1.1.0"; } }
+﻿namespace TrainingProject { public sealed class Version{ public const string VERSION = "1.2.0"; } }
