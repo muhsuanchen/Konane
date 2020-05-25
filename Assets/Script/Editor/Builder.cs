@@ -7,14 +7,19 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-public class GameBuilder
+public class Builder
 {
     const string kFileName = "konane";
     const string kVersionPath = "Assets/Version.cs";
 
     static readonly Dictionary<string, string> CommandLindArgs = new Dictionary<string, string>();
 
-    static GameBuilder()
+    static Builder()
+    {
+        ParseCmdArg();
+    }
+
+    static void ParseCmdArg()
     {
         var args = Environment.GetCommandLineArgs();
 
@@ -40,7 +45,7 @@ public class GameBuilder
     static bool GetCmdArg(string key, out string value)
     {
         var r = CommandLindArgs.TryGetValue(key, out value);
-        Debug.Log($"!!!!!!!!!!!!!! pass-in {key}: {value}");
+        Debug.Log($"[Builder] CMD key {key}: {value}");
         return r;
     }
 
@@ -61,7 +66,7 @@ public class GameBuilder
     [MenuItem("Tools/Build/Android")]
     static void BuildAndroid()
     {
-        Debug.Log($"BuildAndroid");
+        Debug.Log($"[Builder] BuildAndroid");
         var target = BuildTarget.Android;
         var group = BuildTargetToGroup(target);
         var success = EditorUserBuildSettings.SwitchActiveBuildTarget(group, target);
@@ -135,7 +140,7 @@ public class GameBuilder
 
     static bool TryBuild(BuildTarget target, BuildTargetGroup group, string outputPath)
     {
-        Debug.Log($"TryBuild {target}, {group}, {outputPath}");
+        Debug.Log($"[Builder] TryBuild {target}, {group}, {outputPath}");
         string buildError;
         switch (target)
         {
@@ -165,8 +170,8 @@ public class GameBuilder
     {
         var errorText = string.Empty;
 
-        Debug.Log($"Building starts @ {DateTime.Now:yyyy-MM-dd HH:mm.ss.fff}");
-        Debug.Log($"OutputPath {outputPath}");
+        Debug.Log($"[Builder] Building starts @ {DateTime.Now:yyyy-MM-dd HH:mm.ss.fff}");
+        Debug.Log($"[Builder] OutputPath {outputPath}");
 
         var originalDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(targetGroup);
 
@@ -261,12 +266,12 @@ public class GameBuilder
     {
         if (string.IsNullOrEmpty(buildError))
         {
-            Debug.Log("build succeed.");
+            Debug.Log("[Builder] build succeed.");
             return true;
         }
         else
         {
-            Debug.Log($"build failed, error:{buildError}");
+            Debug.Log($"[Builder] build failed, error:{buildError}");
             return false;
         }
     }

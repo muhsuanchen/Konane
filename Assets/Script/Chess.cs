@@ -109,7 +109,6 @@ namespace TrainingProject
             if (GameManager.Instance.CurrentSide != Side)
                 return;
 
-            Debug.Log($"OnSelect {Pos} **********");
             Selecting(true);
         }
 
@@ -136,7 +135,7 @@ namespace TrainingProject
         {
             if (GameManager.Instance.Round == 1)
             {
-                //Debug.Log($"Selecting {Pos} = {active} && {Removable}");
+                //Debug.Log($"[Game] Selecting {Pos} = {active} && {Removable}");
                 var remove = Removable && active;
                 m_Remove.enabled = remove;
                 if (remove) OnRemoveEvent?.Invoke(this);

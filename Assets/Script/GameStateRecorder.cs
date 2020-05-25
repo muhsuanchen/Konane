@@ -34,7 +34,7 @@ namespace TrainingProject
         public static void RecordGameState(GameState state)
         {
             var json = JsonUtility.ToJson(state);
-            Debug.Log($"[Recorder] record json: {json}");
+            //Debug.Log($"[Recorder] record json: {json}");
             Prefs.BoardState = json;
         }
 

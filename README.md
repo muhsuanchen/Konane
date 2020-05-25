@@ -26,10 +26,10 @@ Hint:
 ### CMD
 #### Android APK
 ```
-"C:\Program Files\Unity\Hub\Editor\2019.3.3f1\Editor\Unity.exe" -quit -batchmode -nographics -buildTarget Android -executeMethod GameBuilder.BuildViaCommandLine --buildingVersion "1.1.0" --buildingFolder ".\Output"
+"C:\Program Files\Unity\Hub\Editor\2019.3.3f1\Editor\Unity.exe" -quit -batchmode -nographics -buildTarget Android -executeMethod Builder.BuildViaCommandLine --buildingVersion "1.1.0" --buildingFolder ".\Output"
 ```
 
 #### Windows EXE
 ```
-"C:\Program Files\Unity\Hub\Editor\2019.3.3f1\Editor\Unity.exe" -quit -batchmode -nographics -buildTarget StandaloneWindows -executeMethod GameBuilder.BuildViaCommandLine --buildingVersion "1.1.0" --buildingFolder ".\Output"
+"C:\Program Files\Unity\Hub\Editor\2019.3.3f1\Editor\Unity.exe" -quit -batchmode -nographics -buildTarget StandaloneWindows -executeMethod Builder.BuildViaCommandLine --buildingVersion "1.1.0" --buildingFolder ".\Output"
 ```

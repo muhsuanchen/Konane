@@ -235,13 +235,12 @@ namespace TrainingProject
         void UpdateBoardSize()
         {
             var checkWidth = mBoardWidth / mBoardSize;
-            Debug.Log($"Board Width {mBoardWidth}, {checkWidth}");
+            //Debug.Log($"[Game] Board Width {mBoardWidth}, {checkWidth}");
             m_BoardLayout.cellSize = new Vector2(checkWidth, checkWidth);
         }
 
         void UpdateBtnColor()
         {
-            Debug.Log($"[Update Btn Color] GameSetting.Instance.ShowHint");
             m_ShowHintImage.color = (GameSetting.Instance.ShowHint)
                                     ? mSelectBtnColor
                                     : mNormalBtnColor;
@@ -356,17 +355,17 @@ namespace TrainingProject
             bool haveValidPath = false;
             foreach (var emptyCheck in mEmptyCheck)
             {
-                //Debug.Log($"Check emptyCheck {emptyCheck.Pos}");
+                //Debug.Log($"[Game] Check emptyCheck {emptyCheck.Pos}");
                 haveValidPath |= TraceAllDirection(side, emptyCheck);
             }
 
-            Debug.Log($"CurMaxMove {mCurMaxMove}, IsMoveValidCheckTime {IsMoveValidCheckTime}");
+            //Debug.Log($"[Game] CurMaxMove {mCurMaxMove}, IsMoveValidCheckTime {IsMoveValidCheckTime}");
             return haveValidPath;
         }
 
         bool TraceAllDirection(bool side, Check check)
         {
-            //Debug.Log($"Check Same Side? {Check.Side == side}");
+            //Debug.Log($"[Game] Check Same Side? {Check.Side == side}");
             // 只能採在同隊的格子上
             if (check.Side != side)
                 return false;
@@ -410,7 +409,7 @@ namespace TrainingProject
 
             if (canMoveTo)
             {
-                //Debug.Log($"Highlight To {Check.YPos}, {Check.XPos}");
+                //Debug.Log($"[Game] Highlight To {Check.YPos}, {Check.XPos}");
                 SetCheckCanMoveTo(check, CheckSelect);
             }
 
@@ -424,20 +423,20 @@ namespace TrainingProject
         bool TraceMovablePath(bool side, Check check, Vector2Int direction, ref int depth, ref LinkedList<Check> movePath, out Check moveFrom)
         {
             IsMoveValidCheckTime++;
-            //Debug.Log($"Check {Check.Pos}, {direction}");
+            //Debug.Log($"[Game] Check {Check.Pos}, {direction}");
             moveFrom = null;
 
             var isMoveDirectionValid = IsMoveDirectionValid(check.Pos, direction, out var nextCheck);
-            //Debug.Log($"Check IsMoveValid? {isMoveDirectionValid}");
+            //Debug.Log($"[Game] Check IsMoveValid? {isMoveDirectionValid}");
             if (!isMoveDirectionValid)
                 return false;
 
             var nextCheckHaveChess = nextCheck.CurrentChess != null;
-            //Debug.Log($"Check nextCheckHaveChess {nextCheckHaveChess}");
+            //Debug.Log($"[Game] Check nextCheckHaveChess {nextCheckHaveChess}");
             if (nextCheckHaveChess)
             {
                 // 對面有棋了，此條路線成立
-                //Debug.Log($"Highlight From {nextCheck.Pos}");
+                //Debug.Log($"[Game] Highlight From {nextCheck.Pos}");
                 SetCheckCanMoveFrom(nextCheck);
                 moveFrom = nextCheck;
                 return true;
@@ -452,7 +451,7 @@ namespace TrainingProject
                     if (moveFrom != null)
                         moveFrom.SetDirPath(direction, check);
 
-                    //Debug.Log($"Highlight To {Check.YPos}, {Check.XPos}");
+                    //Debug.Log($"[Game] Highlight To {Check.YPos}, {Check.XPos}");
                     SetCheckCanMoveTo(check, CheckSelect);
                     check.SetDirChecked(direction);
                     return true;
@@ -477,7 +476,7 @@ namespace TrainingProject
             if (!isNextPosValid)
                 return false;
 
-            //Debug.Log($"IsMoveValid crossPos {crossPos}, nextPos {nextPos}");
+            //Debug.Log($"[Game] IsMoveValid crossPos {crossPos}, nextPos {nextPos}");
             nextCheck = mCheckArray[nextPos.x, nextPos.y];
 
             // 是否有可以跨過去的棋
@@ -539,7 +538,7 @@ namespace TrainingProject
 
         void ChessRemove(Chess chess)
         {
-            Debug.Log($"ChessRemove {chess.Pos}");
+            //Debug.Log($"[Game] ChessRemove {chess.Pos}");
             OnChessSelect?.Invoke(chess.Pos);
 
             if (mCurSelectFrom == null
@@ -601,7 +600,7 @@ namespace TrainingProject
         #region Move Chess
         void TryMoveChess(Check fromCheck, Check toCheck)
         {
-            //Debug.Log($"TryMoveChess {fromCheck.Pos}, {toCheck.Pos}");
+            //Debug.Log($"[Game] TryMoveChess {fromCheck.Pos}, {toCheck.Pos}");
             if (fromCheck == null || toCheck == null)
                 return;
 
@@ -642,7 +641,7 @@ namespace TrainingProject
         {
             moveTimes = 0;
 
-            //Debug.Log($"IsMoveValid CanMoveFrom {fromCheck.CanMoveFrom}, CanMoveTo {toCheck.CanMoveTo}");
+            //Debug.Log($"[Game] IsMoveValid CanMoveFrom {fromCheck.CanMoveFrom}, CanMoveTo {toCheck.CanMoveTo}");
             if (!fromCheck.CanMoveFrom)
                 return false;
 
@@ -652,7 +651,7 @@ namespace TrainingProject
             var direction = toCheck.Pos - fromCheck.Pos;
             var distance = (int)direction.magnitude;
             var normalizedDir = direction / distance;
-            //Debug.Log($"IsMoveValid IsMoveDirectionValid? dir {normalizedDir}, distance {distance}");
+            //Debug.Log($"[Game] IsMoveValid IsMoveDirectionValid? dir {normalizedDir}, distance {distance}");
             if (!IsMoveDirectionValid(normalizedDir))
                 return false;
 
@@ -681,14 +680,14 @@ namespace TrainingProject
 
         bool IsMovePathValid(Vector2Int from, Vector2Int direction, int distance)
         {
-            //Debug.Log($"IsPathValid from {from}, direction {direction}, distance {distance}");
+            //Debug.Log($"[Game] IsPathValid from {from}, direction {direction}, distance {distance}");
             // 順利走完了，回家ㄅ
             if (distance <= 0)
                 return true;
 
             var crossPos = from + direction;
             var nextPos = from + direction * 2;
-            //Debug.Log($"IsPathValid crossPos {crossPos}, nextPos {nextPos}");
+            //Debug.Log($"[Game] IsPathValid crossPos {crossPos}, nextPos {nextPos}");
 
             var crossCheck = mCheckArray[crossPos.x, crossPos.y];
             // 沒有棋可以吃
@@ -734,7 +733,7 @@ namespace TrainingProject
             var chess = check.RemoveChess();
             mEmptyCheck.Add(check);
             RecycleChess(chess);
-            Debug.Log($"Empty {check.XPos}, {check.YPos}");
+            //Debug.Log($"[Game] Empty {check.XPos}, {check.YPos}");
         }
         #endregion Select Event
     }

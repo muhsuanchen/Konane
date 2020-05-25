@@ -14,6 +14,7 @@
             gameState.round = Round;
             gameState.boardSize = mBoardSize;
             gameState.checks = new CheckState[mBoardSize * mBoardSize];
+
             for (int x = 0; x < mBoardSize; x++)
             {
                 for (int y = 0; y < mBoardSize; y++)

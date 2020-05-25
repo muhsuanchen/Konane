@@ -126,7 +126,7 @@ namespace TrainingProject
 
         public void SetHighlight(bool highlight)
         {
-            Debug.Log($"SetHighlight {Pos}, {CanMoveTo}, {highlight}");
+            //Debug.Log($"[Game] SetHighlight {Pos}, {CanMoveTo}, {highlight}");
             m_Highlight.enabled = CanMoveTo && highlight;
         }
 
@@ -195,7 +195,7 @@ namespace TrainingProject
 
         public void SetDirPath(Vector2Int dir, LinkedList<Check> path)
         {
-            Debug.Log($"SetDirPath to {Pos}, {dir}, {path.Count}");
+            //Debug.Log($"[Game] SetDirPath to {Pos}, {dir}, {path.Count}");
             if (dir == Vector2Int.left || dir == Vector2Int.right)
             {
                 foreach (var check in path)
@@ -214,14 +214,14 @@ namespace TrainingProject
 
         void SetXDirPath(Check nextCheck)
         {
-            Debug.Log($"SetXDirPath to {Pos}, {nextCheck.Pos}");
+            //Debug.Log($"[Game] SetXDirPath to {Pos}, {nextCheck.Pos}");
             if (!mCurMaxXPath.Contains(nextCheck))
                 mCurMaxXPath.AddLast(nextCheck);
         }
 
         void SetYDirPath(Check nextCheck)
         {
-            Debug.Log($"SetYDirPath to {Pos}, {nextCheck.Pos}");
+            //Debug.Log($"[Game] SetYDirPath to {Pos}, {nextCheck.Pos}");
             if (!mCurMaxYPath.Contains(nextCheck))
                 mCurMaxYPath.AddLast(nextCheck);
         }
