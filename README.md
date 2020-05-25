@@ -14,7 +14,6 @@ ProjectVersion: Unity 2019.3.3f1
 <b>[Return]</b> 可以放棄此回合、回到首頁選單。  
 <b>[Hint(Eye)]</b> 可切換是否顯示所有目前可移動的棋子的最大移動步數。  
 
-Hint:  
 每回合皆會記錄當下棋局，若中途 [Return] 或 關掉 App，之後皆可透過 Menu [Resume] 恢復棋局  
 
 ## 打包
